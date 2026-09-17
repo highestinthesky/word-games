@@ -1,4 +1,4 @@
-import { CARDS, CARD_COUNT } from "./cards.js";
+import { CARDS } from "./cards.js";
 import {
   areTeamNamesValid,
   formatSignedScore,
@@ -19,17 +19,14 @@ const elements = {
   addTeamButton: document.querySelector("#addTeamButton"),
   activeTeamName: document.querySelector("#activeTeamName"),
   brandMark: document.querySelector(".brand-mark"),
-  cardCategory: document.querySelector("#cardCategory"),
-  cardCounter: document.querySelector("#cardCounter"),
   cardWord: document.querySelector("#cardWord"),
   closeRulesButton: document.querySelector("#closeRulesButton"),
   closeSummaryButton: document.querySelector("#closeSummaryButton"),
   correctButton: document.querySelector("#correctButton"),
-  correctCount: document.querySelector("#correctCount"),
-  deckCount: document.querySelector("#deckCount"),
   dialogAddTeam: document.querySelector("#dialogAddTeam"),
   durationChoices: document.querySelector("#durationChoices"),
   forbiddenWords: document.querySelector("#forbiddenWords"),
+  fullscreenButton: document.querySelector("#fullscreenButton"),
   nextTeamButton: document.querySelector("#nextTeamButton"),
   rulesButton: document.querySelector("#rulesButton"),
   rulesDialog: document.querySelector("#rulesDialog"),
@@ -39,9 +36,8 @@ const elements = {
   settingsDialog: document.querySelector("#settingsDialog"),
   settingsForm: document.querySelector("#settingsForm"),
   skipButton: document.querySelector("#skipButton"),
-  skipCount: document.querySelector("#skipCount"),
   skipPenaltyInput: document.querySelector("#skipPenaltyInput"),
-  skipScore: document.querySelector("#skipScore"),
+  startPanel: document.querySelector("#startPanel"),
   startRoundButton: document.querySelector("#startRoundButton"),
   summaryCorrect: document.querySelector("#summaryCorrect"),
   summaryDialog: document.querySelector("#summaryDialog"),
@@ -50,7 +46,6 @@ const elements = {
   summaryTaboo: document.querySelector("#summaryTaboo"),
   summaryTeam: document.querySelector("#summaryTeam"),
   tabooButton: document.querySelector("#tabooButton"),
-  tabooCount: document.querySelector("#tabooCount"),
   teamEditor: document.querySelector("#teamEditor"),
   teamHelp: document.querySelector("#teamHelp"),
   teamList: document.querySelector("#teamList"),
@@ -139,17 +134,14 @@ function saveState() {
       })
     );
   } catch {
-    showError("Scores could not be saved in this browser. Keep this tab open to preserve the current game.");
+    showError("Scores won’t persist.");
   }
 }
 
 function renderApp() {
-  elements.deckCount.textContent = new Intl.NumberFormat().format(CARD_COUNT);
   elements.activeTeamName.textContent = state.teams[state.activeTeamIndex].name;
   elements.timerText.textContent = String(Math.ceil(state.remainingMs / 1000));
-  elements.skipScore.textContent = state.skipPenalty ? "−1" : "0";
   renderTeams();
-  renderRoundStats();
   setActionState(state.running && !state.paused);
   updateTimerVisual();
 }
@@ -166,9 +158,7 @@ function renderTeams() {
     copy.className = "team-row__name";
     const name = document.createElement("strong");
     name.textContent = team.name;
-    const status = document.createElement("small");
-    status.textContent = index === state.activeTeamIndex ? "Current turn" : `Team ${index + 1}`;
-    copy.append(name, status);
+    copy.append(name);
 
     const stepper = document.createElement("div");
     stepper.className = "score-stepper";
@@ -191,12 +181,6 @@ function scoreButton(label, ariaLabel, teamId, delta) {
   button.dataset.teamId = teamId;
   button.dataset.delta = String(delta);
   return button;
-}
-
-function renderRoundStats() {
-  elements.correctCount.textContent = String(state.roundStats.correct);
-  elements.skipCount.textContent = String(state.roundStats.skipped);
-  elements.tabooCount.textContent = String(state.roundStats.taboo);
 }
 
 function setActionState(enabled) {
@@ -230,8 +214,6 @@ function showCard(card, animate = true) {
 
   const update = () => {
     elements.cardWord.textContent = card.target;
-    elements.cardCategory.textContent = card.category;
-    elements.cardCounter.textContent = `Card ${new Intl.NumberFormat().format(state.cardsSeen)}`;
     elements.forbiddenWords.replaceChildren(
       ...card.forbidden.map((word) => {
         const item = document.createElement("li");
@@ -255,10 +237,10 @@ function startRound() {
   state.remainingMs = state.duration * 1000;
   state.endAt = Date.now() + state.remainingMs;
   elements.wordCard.dataset.state = "playing";
+  elements.startPanel.inert = true;
   elements.timerButton.disabled = false;
   elements.timerButton.setAttribute("aria-label", "Pause timer");
   showCard(getNextCard(), false);
-  renderRoundStats();
   setActionState(true);
   saveState();
   tickTimer();
@@ -325,7 +307,6 @@ function recordCard(result) {
     team.score -= 1;
   }
   renderTeams();
-  renderRoundStats();
   showCard(getNextCard());
   saveState();
 }
@@ -367,6 +348,7 @@ function advanceTeam() {
   state.roundStats = freshRoundStats();
   state.remainingMs = state.duration * 1000;
   elements.wordCard.dataset.state = "idle";
+  elements.startPanel.inert = false;
   elements.activeTeamName.textContent = state.teams[state.activeTeamIndex].name;
   renderApp();
   saveState();
@@ -466,15 +448,15 @@ function validateSettings() {
   });
   elements.teamHelp.classList.toggle("is-error", !valid);
   elements.teamHelp.textContent = valid
-    ? "Use 2–8 teams. Names must be different."
-    : "Team names were not saved. Give every team a different name, then try again.";
+    ? "2–8 unique names."
+    : "Use unique team names.";
   return valid;
 }
 
 function clearTeamError() {
   settingsHadError = false;
   elements.teamHelp.classList.remove("is-error");
-  elements.teamHelp.textContent = "Use 2–8 teams. Names must be different.";
+  elements.teamHelp.textContent = "2–8 unique names.";
 }
 
 function saveSettings() {
@@ -503,6 +485,21 @@ function showError(message) {
   window.setTimeout(() => toast.remove(), 6000);
 }
 
+function syncFullscreenButton() {
+  const isFullscreen = Boolean(document.fullscreenElement);
+  elements.fullscreenButton.setAttribute("aria-label", isFullscreen ? "Exit full screen" : "Enter full screen");
+  elements.fullscreenButton.setAttribute("aria-pressed", String(isFullscreen));
+}
+
+async function toggleFullscreen() {
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await document.documentElement.requestFullscreen();
+  } catch {
+    showError("Full screen unavailable.");
+  }
+}
+
 function isEditableTarget(target) {
   return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement;
 }
@@ -515,6 +512,7 @@ elements.timerButton.addEventListener("click", togglePause);
 elements.settingsButton.addEventListener("click", () => openSettings(false));
 elements.addTeamButton.addEventListener("click", () => openSettings(true));
 elements.rulesButton.addEventListener("click", () => openDialog(elements.rulesDialog));
+elements.fullscreenButton.addEventListener("click", toggleFullscreen);
 elements.closeRulesButton.addEventListener("click", () => elements.rulesDialog.close());
 elements.rulesPlayButton.addEventListener("click", () => {
   elements.rulesDialog.dataset.resumeTimer = "false";
@@ -584,4 +582,7 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden && state.running && !state.paused) pauseTimer();
 });
 
+document.addEventListener("fullscreenchange", syncFullscreenButton);
+
 renderApp();
+syncFullscreenButton();
