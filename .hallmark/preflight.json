@@ -1,0 +1,12 @@
+{
+  "date": "2026-09-16",
+  "signals": {
+    "framework": "vanilla HTML, CSS, and JavaScript",
+    "font_stack": "none found",
+    "palette": "none found",
+    "motion": "motion-cut; no library",
+    "spacing": "none found"
+  },
+  "preserve": [],
+  "introduce": ["Hum token system", "Workbench macrostructure", "microinteraction discipline", "responsive rules"]
+}
