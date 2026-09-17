@@ -224,7 +224,7 @@ h2 {
   line-height: 1;
 }
 
-@media (max-width: 22rem) {
+@media (max-width: 32rem) {
   .brand-copy {
     display: none;
   }
@@ -881,6 +881,15 @@ legend {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-sm);
   margin-block-start: var(--space-sm);
+}
+
+.dialog-copy {
+  max-width: 52ch;
+  color: var(--color-ink-soft);
+}
+
+#resetDialog .dialog-actions {
+  margin-block-start: var(--space-xl);
 }
 
 .rule-list {

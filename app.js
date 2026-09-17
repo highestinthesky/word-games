@@ -5,7 +5,8 @@ import {
   makeId,
   normalizeTeamName,
   scoreRound,
-  shuffle
+  shuffle,
+  takeNextUnseenCard
 } from "./game-core.js";
 
 const STORAGE_KEY = "dont-say-it:v2";
@@ -28,6 +29,11 @@ const elements = {
   forbiddenWords: document.querySelector("#forbiddenWords"),
   fullscreenButton: document.querySelector("#fullscreenButton"),
   nextTeamButton: document.querySelector("#nextTeamButton"),
+  newGameButton: document.querySelector("#newGameButton"),
+  resetDialog: document.querySelector("#resetDialog"),
+  resetGameButton: document.querySelector("#resetGameButton"),
+  cancelResetButton: document.querySelector("#cancelResetButton"),
+  keepGameButton: document.querySelector("#keepGameButton"),
   rulesButton: document.querySelector("#rulesButton"),
   rulesDialog: document.querySelector("#rulesDialog"),
   rulesPlayButton: document.querySelector("#rulesPlayButton"),
@@ -69,11 +75,12 @@ const state = {
   remainingMs: stored.duration * 1000,
   currentCard: null,
   lastTarget: "",
-  cardsSeen: 0,
+  cardsSeen: stored.usedCardIds.length,
   roundStats: freshRoundStats()
 };
 
-let deck = shuffle(CARDS);
+let usedCardIds = new Set(stored.usedCardIds);
+let deck = shuffle(CARDS.filter((card) => !usedCardIds.has(card.id)));
 let deckIndex = 0;
 let timerFrame = 0;
 let draftTeams = [];
@@ -89,7 +96,8 @@ function loadStoredState() {
     activeTeamIndex: 0,
     duration: 60,
     skipPenalty: false,
-    roundNumber: 0
+    roundNumber: 0,
+    usedCardIds: []
   };
 
   try {
@@ -109,12 +117,18 @@ function loadStoredState() {
 
     if (teams.length < 2 || !areTeamNamesValid(teams.map((team) => team.name))) return fallback;
     const durationOptions = [30, 45, 60, 90, 120];
+    const playableCardIds = new Set(CARDS.map((card) => card.id));
+    const usedCardIds = Array.isArray(parsed.usedCardIds)
+      ? [...new Set(parsed.usedCardIds.filter((id) => typeof id === "string" && playableCardIds.has(id)))]
+      : [];
+
     return {
       teams,
       activeTeamIndex: Number.isInteger(parsed.activeTeamIndex) ? Math.max(0, parsed.activeTeamIndex) : 0,
       duration: durationOptions.includes(parsed.duration) ? parsed.duration : 60,
       skipPenalty: Boolean(parsed.skipPenalty),
-      roundNumber: Number.isInteger(parsed.roundNumber) ? Math.max(0, parsed.roundNumber) : 0
+      roundNumber: Number.isInteger(parsed.roundNumber) ? Math.max(0, parsed.roundNumber) : 0,
+      usedCardIds
     };
   } catch {
     return fallback;
@@ -130,7 +144,8 @@ function saveState() {
         activeTeamIndex: state.activeTeamIndex,
         duration: state.duration,
         skipPenalty: state.skipPenalty,
-        roundNumber: state.roundNumber
+        roundNumber: state.roundNumber,
+        usedCardIds: [...usedCardIds]
       })
     );
   } catch {
@@ -190,20 +205,12 @@ function setActionState(enabled) {
 }
 
 function getNextCard() {
-  if (deckIndex >= deck.length) {
-    deck = shuffle(CARDS);
-    deckIndex = 0;
-  }
-
-  let card = deck[deckIndex];
-  deckIndex += 1;
-  if (card.target === state.lastTarget && deckIndex < deck.length) {
-    card = deck[deckIndex];
-    deckIndex += 1;
-  }
-  state.lastTarget = card.target;
-  state.cardsSeen += 1;
-  return card;
+  const next = takeNextUnseenCard(deck, deckIndex, usedCardIds);
+  deckIndex = next.nextIndex;
+  if (!next.card) return null;
+  state.lastTarget = next.card.target;
+  state.cardsSeen = usedCardIds.size;
+  return next.card;
 }
 
 function showCard(card, animate = true) {
@@ -230,6 +237,11 @@ function showCard(card, animate = true) {
 
 function startRound() {
   if (state.running) return;
+  const nextCard = getNextCard();
+  if (!nextCard) {
+    showError("Every card in this game has been used. Start a new game for a fresh deck.");
+    return;
+  }
   state.running = true;
   state.paused = false;
   state.roundNumber += 1;
@@ -240,7 +252,7 @@ function startRound() {
   elements.startPanel.inert = true;
   elements.timerButton.disabled = false;
   elements.timerButton.setAttribute("aria-label", "Pause timer");
-  showCard(getNextCard(), false);
+  showCard(nextCard, false);
   setActionState(true);
   saveState();
   tickTimer();
@@ -307,7 +319,12 @@ function recordCard(result) {
     team.score -= 1;
   }
   renderTeams();
-  showCard(getNextCard());
+  const nextCard = getNextCard();
+  if (nextCard) showCard(nextCard);
+  else {
+    endRound();
+    showError("That was the final card. Start a new game to reshuffle the full deck.");
+  }
   saveState();
 }
 
@@ -352,6 +369,33 @@ function advanceTeam() {
   elements.activeTeamName.textContent = state.teams[state.activeTeamIndex].name;
   renderApp();
   saveState();
+}
+
+function resetGame() {
+  window.cancelAnimationFrame(timerFrame);
+  state.teams = state.teams.map((team) => ({ ...team, score: 0 }));
+  state.activeTeamIndex = 0;
+  state.roundNumber = 0;
+  state.running = false;
+  state.paused = false;
+  state.endAt = 0;
+  state.remainingMs = state.duration * 1000;
+  state.currentCard = null;
+  state.lastTarget = "";
+  state.roundStats = freshRoundStats();
+  usedCardIds = new Set();
+  deck = shuffle(CARDS);
+  deckIndex = 0;
+  state.cardsSeen = 0;
+  elements.wordCard.dataset.state = "idle";
+  elements.startPanel.inert = false;
+  elements.timerButton.disabled = true;
+  elements.timerButton.setAttribute("aria-label", "Round timer is ready");
+  elements.cardWord.textContent = "Ready?";
+  elements.forbiddenWords.replaceChildren();
+  renderApp();
+  saveState();
+  showError("New game ready. Scores and the card history were reset.");
 }
 
 function adjustTeamScore(teamId, delta) {
@@ -512,12 +556,20 @@ elements.timerButton.addEventListener("click", togglePause);
 elements.settingsButton.addEventListener("click", () => openSettings(false));
 elements.addTeamButton.addEventListener("click", () => openSettings(true));
 elements.rulesButton.addEventListener("click", () => openDialog(elements.rulesDialog));
+elements.newGameButton.addEventListener("click", () => openDialog(elements.resetDialog));
 elements.fullscreenButton.addEventListener("click", toggleFullscreen);
 elements.closeRulesButton.addEventListener("click", () => elements.rulesDialog.close());
 elements.rulesPlayButton.addEventListener("click", () => {
   elements.rulesDialog.dataset.resumeTimer = "false";
   elements.rulesDialog.close();
   if (!state.running) startRound();
+});
+elements.cancelResetButton.addEventListener("click", () => elements.resetDialog.close("cancel"));
+elements.keepGameButton.addEventListener("click", () => elements.resetDialog.close("cancel"));
+elements.resetGameButton.addEventListener("click", () => {
+  elements.resetDialog.dataset.resumeTimer = "false";
+  elements.resetDialog.close("reset");
+  resetGame();
 });
 
 elements.teamList.addEventListener("click", (event) => {
@@ -552,7 +604,7 @@ elements.nextTeamButton.addEventListener("click", () => {
   startRound();
 });
 
-[elements.settingsDialog, elements.rulesDialog].forEach((dialog) => {
+[elements.settingsDialog, elements.rulesDialog, elements.resetDialog].forEach((dialog) => {
   dialog.addEventListener("close", handleDialogClose);
   dialog.addEventListener("click", (event) => {
     if (event.target === dialog) dialog.close();

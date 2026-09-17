@@ -5,7 +5,8 @@ import {
   formatSignedScore,
   normalizeTeamName,
   scoreRound,
-  shuffle
+  shuffle,
+  takeNextUnseenCard
 } from "../game-core.js";
 
 test("round scoring applies correct, taboo, and optional skip points", () => {
@@ -33,4 +34,17 @@ test("shuffle returns a new array without losing entries", () => {
   assert.notEqual(result, source);
   assert.deepEqual([...result].sort(), source);
   assert.deepEqual(source, [1, 2, 3, 4]);
+});
+
+test("a game deck never returns a card that it has already shown", () => {
+  const deck = [{ id: "one" }, { id: "two" }, { id: "three" }];
+  const seen = new Set(["two"]);
+  const first = takeNextUnseenCard(deck, 0, seen);
+  const second = takeNextUnseenCard(deck, first.nextIndex, seen);
+  const final = takeNextUnseenCard(deck, second.nextIndex, seen);
+
+  assert.equal(first.card.id, "one");
+  assert.equal(second.card.id, "three");
+  assert.equal(final.card, null);
+  assert.deepEqual([...seen].sort(), ["one", "three", "two"]);
 });

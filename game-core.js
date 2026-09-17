@@ -7,6 +7,20 @@ export function shuffle(items, random = Math.random) {
   return copy;
 }
 
+// The game keeps a set of every card it has shown. This helper advances through
+// a shuffled deck without ever returning a card already in that set.
+export function takeNextUnseenCard(deck, startIndex, seenCardIds) {
+  let nextIndex = startIndex;
+  while (nextIndex < deck.length) {
+    const card = deck[nextIndex];
+    nextIndex += 1;
+    if (seenCardIds.has(card.id)) continue;
+    seenCardIds.add(card.id);
+    return { card, nextIndex };
+  }
+  return { card: null, nextIndex };
+}
+
 export function scoreRound(stats, skipPenalty = false) {
   return stats.correct - stats.taboo - (skipPenalty ? stats.skipped : 0);
 }

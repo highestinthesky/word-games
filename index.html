@@ -27,6 +27,7 @@
       <nav class="slab-nav" aria-label="Game options">
         <button class="nav-button" id="rulesButton" type="button">Rules</button>
         <button class="nav-button" id="settingsButton" type="button">Setup</button>
+        <button class="nav-button" id="newGameButton" type="button">New game</button>
         <button class="nav-button fullscreen-button" id="fullscreenButton" type="button" aria-label="Enter full screen" aria-pressed="false"><span aria-hidden="true">⛶</span></button>
       </nav>
     </header>
@@ -144,6 +145,18 @@
       <div class="dialog-actions">
         <button class="btn btn--soft" id="closeSummaryButton" type="button">Done</button>
         <button class="btn btn--pear" id="nextTeamButton" type="button">Next</button>
+      </div>
+    </dialog>
+
+    <dialog class="game-dialog" id="resetDialog" aria-labelledby="resetTitle">
+      <div class="dialog-head">
+        <h2 id="resetTitle">Start a new game?</h2>
+        <button class="icon-button" id="cancelResetButton" type="button" aria-label="Keep current game">×</button>
+      </div>
+      <p class="dialog-copy">This resets every team’s score and returns every word to the deck. Your team names and setup stay in place.</p>
+      <div class="dialog-actions">
+        <button class="btn btn--soft" id="keepGameButton" type="button">Keep game</button>
+        <button class="btn btn--pear" id="resetGameButton" type="button">Start new game</button>
       </div>
     </dialog>
 

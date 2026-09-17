@@ -1,3 +1,5 @@
+import { EXPANDED_WORD_CLUSTERS } from "./expanded-word-clusters.js";
+
 // Each six-word semantic cluster yields six cards. For each card, the other five
 // terms become the forbidden words. Cards are deduplicated by target below.
 export const WORD_CLUSTERS = [
@@ -237,14 +239,100 @@ export const WORD_CLUSTERS = [
   ["Life", ["Patience", "Wait", "Calm", "Time", "Tolerance", "Hurry"]],
   ["Life", ["Curiosity", "Question", "Wonder", "Explore", "Interested", "Discover"]],
   ["Life", ["Luck", "Chance", "Fortune", "Lucky charm", "Coincidence", "Gamble"]],
-  ["Life", ["Secret", "Whisper", "Private", "Tell", "Confidential", "Keep"]]
+  ["Life", ["Secret", "Whisper", "Private", "Tell", "Confidential", "Keep"]],
+
+  ...EXPANDED_WORD_CLUSTERS
 ];
+
+// Card faces should be quick to scan and easy to say aloud. Source sets may use
+// descriptive phrases, but the playable deck uses only familiar single words.
+const SINGLE_WORD_ALIASES = new Map([
+  ["living room", "lounge"],
+  ["remote control", "remote"],
+  ["laundry room", "laundry"],
+  ["washing machine", "washer"],
+  ["coffee table", "table"],
+  ["long-lived", "ancient"],
+  ["olympus mons", "olympus"],
+  ["hip-hop", "rap"],
+  ["honky-tonk", "country"],
+  ["off-key", "sour"],
+  ["three-pointer", "triple"],
+  ["26.2 miles", "marathon"],
+  ["ready or not", "ready"],
+  ["wi-fi", "wireless"],
+  ["x-ray", "scan"],
+  ["time off", "break"],
+  ["wake up", "awake"],
+  ["lights out", "dark"],
+  ["résumé", "resume"],
+  ["sharm el-sheikh", "resort"],
+  ["cox's bazar", "beach"],
+  ["kuala lumpur", "capital"],
+  ["phnom penh", "capital"],
+  ["machu picchu", "ruins"],
+  ["cacio e pepe", "pasta"],
+  ["rogan josh", "curry"],
+  ["dim sum", "dumpling"],
+  ["chow mein", "noodles"],
+  ["panna cotta", "pudding"],
+  ["coq au vin", "stew"],
+  ["old fashioned", "cocktail"],
+  ["long-eared owl", "owl"],
+  ["snowy owl", "owl"],
+  ["barn owl", "owl"],
+  ["great horned owl", "owl"],
+  ["tawny owl", "owl"],
+  ["screech owl", "owl"],
+  ["space shuttle", "shuttle"],
+  ["lunar lander", "lander"],
+  ["space station", "station"],
+  ["heat shield", "shield"],
+  ["escape velocity", "velocity"],
+  ["gravity assist", "slingshot"],
+  ["neil armstrong", "armstrong"],
+  ["mae jemison", "jemison"],
+  ["yuri gagarin", "gagarin"],
+  ["sally ride", "ride"],
+  ["chris hadfield", "hadfield"],
+  ["valentina tereshkova", "tereshkova"],
+  ["two-factor authentication", "passcode"],
+  ["carbon fiber", "fiber"],
+  ["soil ph", "acidity"],
+  ["ct scan", "scan"],
+  ["maillard reaction", "browning"],
+  ["pull-up", "pullup"],
+  ["carry-on", "luggage"]
+]);
+
+// These specialist terms make a casual party game feel like a quiz. Reject the
+// whole six-word set if one appears, so its clue relationships stay intact.
+const UNFAMILIAR_WORDS = new Set([
+  "torshavn", "chefchaouen", "gyeongju", "stellenbosch", "ushuaia", "bariloche", "bazar", "lumpur", "penh", "picchu", "itza", "gullfoss", "kruger", "fiordland", "galia", "casaba", "chanterelle", "enoki", "farro", "orzo", "muesli", "congee", "pecorino", "manchego", "tarragon", "cardamom", "kumquat", "kapok", "sargassum", "phytoplankton", "caecilian", "gharial", "chamois", "markhor", "mouflon", "tahr", "lorikeet", "conure", "fritillary", "euphonium", "celesta", "villanelle", "sestina", "moliere", "hansberry", "haumea", "makemake", "sedna", "apogee", "perigee", "tennessine", "francium", "astatine", "rubidium", "cesium", "beryllium", "strontium", "radium", "bromine", "cadmium", "caesium", "petri", "burette", "caecilian", "derailleur", "savasana", "canyoning", "orienteering"
+]);
+
+export function toPlayableWord(value) {
+  const key = value.toLocaleLowerCase();
+  const replacement = SINGLE_WORD_ALIASES.get(key);
+  if (replacement) return `${replacement[0].toUpperCase()}${replacement.slice(1)}`;
+  const words = value.match(/[A-Za-z]+/g) ?? [];
+  const word = words.at(-1);
+  return word ? `${word[0].toUpperCase()}${word.slice(1).toLocaleLowerCase()}` : "";
+}
+
+export function isPlayableWord(value) {
+  return /^[a-z]+$/i.test(value) && !UNFAMILIAR_WORDS.has(value.toLocaleLowerCase());
+}
 
 export function buildCards(clusters = WORD_CLUSTERS) {
   const seen = new Set();
   const cards = [];
 
-  clusters.forEach(([category, words], groupIndex) => {
+  clusters.forEach(([category, sourceWords], groupIndex) => {
+    const words = sourceWords.map(toPlayableWord);
+    const wordKeys = words.map((word) => word.toLocaleLowerCase());
+    if (!words.every(isPlayableWord) || new Set(wordKeys).size !== words.length) return;
+
     words.forEach((target, wordIndex) => {
       const key = target.toLocaleLowerCase();
       if (seen.has(key)) return;
