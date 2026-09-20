@@ -127,62 +127,6 @@ h2 {
   background: var(--color-paper);
 }
 
-.brand {
-  display: inline-flex;
-  flex: 0 1 auto;
-  align-items: center;
-  gap: var(--space-xs);
-  min-width: 0;
-  color: var(--color-ink);
-  text-decoration: none;
-}
-
-.brand-mark {
-  position: relative;
-  flex: 0 0 auto;
-  width: 2.5rem;
-  height: 2.5rem;
-  border: var(--rule-medium) solid var(--color-ink);
-  border-radius: 48% 52% 44% 56%;
-  background: var(--color-accent);
-  box-shadow: var(--space-2xs) var(--space-2xs) 0 var(--color-ink);
-  transform: rotate(-4deg);
-}
-
-.brand-mark::before {
-  content: "";
-  position: absolute;
-  inset-block-start: 0.68rem;
-  inset-inline-start: 0.66rem;
-  width: 0.26rem;
-  height: 0.38rem;
-  border-radius: var(--radius-pill);
-  background: var(--color-ink);
-  box-shadow: 0.84rem 0 0 var(--color-ink);
-}
-
-.brand-mark::after {
-  content: "";
-  position: absolute;
-  inset-inline-start: 50%;
-  inset-block-start: 1.25rem;
-  width: 0.72rem;
-  height: 0.35rem;
-  border-block-end: var(--rule-medium) solid var(--color-ink);
-  border-radius: 0 0 var(--radius-pill) var(--radius-pill);
-  transform: translateX(-50%);
-}
-
-.brand-mark.is-happy {
-  animation: character-pop var(--dur-long) var(--ease-snap);
-}
-
-@keyframes character-pop {
-  0% { transform: rotate(-4deg) translateY(0); }
-  45% { transform: rotate(6deg) translateY(-0.35rem); }
-  100% { transform: rotate(-4deg) translateY(0); }
-}
-
 /* Shared wordmark — see design.md § Shared chrome. Identical rules on every page;
    the "/ Game name" suffix span may hide narrow, "Game Shelf" itself never does. */
 .wordmark {
@@ -191,11 +135,13 @@ h2 {
   align-items: baseline;
   gap: var(--space-2xs);
   overflow: hidden;
+  color: var(--color-ink);
   font-family: var(--font-wordmark);
   font-size: var(--text-sm);
   font-weight: 800;
   letter-spacing: -0.035em;
   line-height: 1.2;
+  text-decoration: none;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1140,15 +1086,6 @@ legend {
 }
 
 @media (min-width: 40rem) {
-  .brand {
-    gap: var(--space-sm);
-  }
-
-  .brand-mark {
-    width: 2.75rem;
-    height: 2.75rem;
-  }
-
   .wordmark {
     font-size: var(--text-md);
   }
@@ -1291,7 +1228,6 @@ html:fullscreen body {
     transition-duration: 1ms !important;
   }
 
-  .brand-mark.is-happy,
   .summary-dialog[open] .summary-burst {
     animation: none;
   }

@@ -19,7 +19,6 @@ const DEFAULT_TEAMS = [
 const elements = {
   addTeamButton: document.querySelector("#addTeamButton"),
   activeTeamName: document.querySelector("#activeTeamName"),
-  brandMark: document.querySelector(".brand-mark"),
   cardWord: document.querySelector("#cardWord"),
   closeRulesButton: document.querySelector("#closeRulesButton"),
   closeSummaryButton: document.querySelector("#closeSummaryButton"),
@@ -310,7 +309,6 @@ function recordCard(result) {
   if (result === "correct") {
     state.roundStats.correct += 1;
     team.score += 1;
-    reactCharacter();
   } else if (result === "skipped") {
     state.roundStats.skipped += 1;
     if (state.skipPenalty) team.score -= 1;
@@ -326,14 +324,6 @@ function recordCard(result) {
     showError("That was the final card. Start a new game to reshuffle the full deck.");
   }
   saveState();
-}
-
-function reactCharacter() {
-  elements.brandMark.classList.remove("is-happy");
-  requestAnimationFrame(() => {
-    elements.brandMark.classList.add("is-happy");
-    window.setTimeout(() => elements.brandMark.classList.remove("is-happy"), 500);
-  });
 }
 
 function endRound() {

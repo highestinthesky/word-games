@@ -20,6 +20,7 @@ const DEFAULT_NAMES = ["Team 1", "Team 2", "Team 3"];
 const app = document.querySelector("#app");
 const liveRegion = document.querySelector("#live-region");
 const setupDialog = document.querySelector("#setup-dialog");
+const resetDialog = document.querySelector("#reset-dialog");
 const rulesDialog = document.querySelector("#rules-dialog");
 const keysDialog = document.querySelector("#keys-dialog");
 
@@ -213,7 +214,7 @@ function board() {
         <div class="turn-card__requirement"><span>Need</span><strong>${round.answersRequired}</strong><span>letter${round.answersRequired === 1 ? "" : "s"}</span></div>
       </section>
       <section class="category-card" aria-labelledby="category-prompt">
-        <div class="category-card__head"><span class="mono-label">${escapeHtml(CLASSROOM_SAFE_PACK.name)}</span><span class="difficulty">${escapeHtml(round.category.difficulty)}</span></div>
+        <div class="category-card__head"><span class="difficulty">${escapeHtml(round.category.difficulty)}</span></div>
         <p id="category-prompt">${escapeHtml(round.category.prompt)}</p>
         <span class="category-card__round">Round ${state.roundNumber} · Overtime ${round.overtime}</span>
       </section>
@@ -271,18 +272,18 @@ function render() {
         <div class="topbar__actions">
           <button class="nav-link" data-action="open-rules" type="button">Rules</button>
           <button class="nav-link" data-action="open-keys" type="button">Keys</button>
-          <span class="nav-note">Classroom Safe · no phones</span>
-          <button class="btn btn--outline btn--sm" data-action="open-setup" type="button">Setup</button>
+          <button class="nav-link" data-action="open-setup" type="button">Setup</button>
+          <button class="nav-link" data-action="open-reset" type="button">New game</button>
           <button class="icon-button" data-action="toggle-fullscreen" type="button" aria-label="${document.fullscreenElement ? "Exit full screen" : "Enter full screen"}" aria-pressed="${Boolean(document.fullscreenElement)}"><span aria-hidden="true">⛶</span></button>
         </div>
       </header>
       <div class="game-content">${scoreBoard()}${board()}${dock()}</div>
       ${showFooter ? `
       <footer class="statement-footer">
-        <p class="statement-footer__line">The group is the referee.</p>
+        <p class="statement-footer__line">Name it first. Claim the letter.</p>
         <div class="statement-footer__meta">
           <span>Game Shelf</span>
-          <span>Classroom Safe · no phones</span>
+          <span>2–8 players · one shared screen</span>
         </div>
       </footer>` : ""}
       ${toast ? `<div class="toast" role="status">${escapeHtml(toast)}</div>` : ""}${burst ? `<span class="success-burst" aria-hidden="true"></span>` : ""}
@@ -327,11 +328,11 @@ function openSetup() {
   setupDialog.showModal();
 }
 
-function openGuide(dialog) {
+function openGuide(dialog, message = "Turn paused while the host checks the guide.") {
   if (state.round?.status === "running") {
     state = pauseTurn(state);
     saveState();
-    announce("Turn paused while the host checks the guide.");
+    announce(message);
     render();
   }
   dialog.showModal();
@@ -340,6 +341,12 @@ function openGuide(dialog) {
 function applyAction(action, target) {
   if (action === "open-setup") return openSetup();
   if (action === "close-setup") return setupDialog.close();
+  if (action === "open-reset") return openGuide(resetDialog, "Turn paused while the host confirms a new game.");
+  if (action === "close-reset") return resetDialog.close();
+  if (action === "confirm-reset") {
+    resetDialog.close();
+    return applyAction("new-game");
+  }
   if (action === "open-rules") return openGuide(rulesDialog);
   if (action === "open-keys") return openGuide(keysDialog);
   if (action === "toggle-fullscreen") return toggleFullscreen();
@@ -377,7 +384,7 @@ function toggleFullscreen() {
   task.catch(() => { tell("Fullscreen is not available in this browser."); render(); });
 }
 
-app.addEventListener("click", (event) => {
+document.addEventListener("click", (event) => {
   const target = event.target.closest("[data-action]");
   if (!target || target.disabled) return;
   try {
@@ -405,9 +412,15 @@ setupDialog.addEventListener("submit", (event) => {
   }
 });
 
+[setupDialog, resetDialog, rulesDialog, keysDialog].forEach((dialog) => {
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+});
+
 document.addEventListener("fullscreenchange", render);
 document.addEventListener("keydown", (event) => {
-  if (rulesDialog.open || keysDialog.open || setupDialog.open || event.metaKey || event.ctrlKey || event.altKey) return;
+  if (rulesDialog.open || keysDialog.open || setupDialog.open || resetDialog.open || event.metaKey || event.ctrlKey || event.altKey) return;
   const key = event.key.toUpperCase();
   try {
     if (event.code === "Space") {

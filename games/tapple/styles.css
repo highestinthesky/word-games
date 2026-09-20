@@ -186,22 +186,6 @@ select:disabled {
   transform: translateY(var(--space-3xs));
 }
 
-.nav-note {
-  display: none;
-}
-
-@media (min-width: 48rem) {
-  .nav-note {
-    display: inline;
-    padding-inline: var(--space-xs);
-    color: var(--color-muted);
-    font-family: var(--font-label);
-    font-size: var(--text-xs);
-    letter-spacing: 0.035em;
-    white-space: nowrap;
-  }
-}
-
 /* Shared button system — see design.md § The button system. Copy verbatim. */
 .btn {
   --btn-face: var(--color-accent);

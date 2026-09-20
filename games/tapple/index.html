@@ -16,6 +16,19 @@
     <main id="app"></main>
     <p id="live-region" class="visually-hidden" aria-live="polite"></p>
     <dialog id="setup-dialog" aria-labelledby="setup-title"></dialog>
+    <dialog id="reset-dialog" aria-labelledby="reset-title">
+      <div class="dialog-card">
+        <div class="dialog-card__head">
+          <div><p class="mono-label">Start over</p><h2 id="reset-title">Start a new game?</h2></div>
+          <button class="icon-button" data-action="close-reset" type="button" aria-label="Keep current game">×</button>
+        </div>
+        <p class="dialog-note">This clears every score and refills the letter bank. Player names and settings stay the same.</p>
+        <div class="dialog-actions">
+          <button class="btn btn--outline" data-action="close-reset" type="button">Keep playing</button>
+          <button class="btn btn--pear" data-action="confirm-reset" type="button">Start new game</button>
+        </div>
+      </div>
+    </dialog>
     <dialog id="rules-dialog" aria-labelledby="rules-title">
       <form method="dialog" class="dialog-card">
         <div class="dialog-card__head">

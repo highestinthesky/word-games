@@ -83,7 +83,7 @@ shadow formulas is exactly how the site drifted out of sync before this pass.
 
 - The shelf (root) lists games; it must not carry gameplay chrome (no timers, no scoreboards).
 - Each game keeps its own board layout, its own JS state machine, and its own copy — those are the parts that make it a different game.
-- A game MAY add its own small illustrative touches (Don't Say It's reacting brand-mark icon is one) — that's a per-surface accent, not a system component, so it doesn't need to be copied to other games.
+- The wordmark itself carries no per-game icon or mark — plain text plus the `/ Game name` suffix, identical markup on the shelf and every game. A prior pass gave Don't Say It a one-off "brand-mark" face icon; it read as an inconsistent logo against the other two surfaces and was removed. Don't reintroduce a per-game wordmark icon without updating this file first.
 
 ## What every page MUST share
 
