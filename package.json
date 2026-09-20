@@ -1,10 +1,10 @@
 {
-  "name": "dont-say-it",
+  "name": "game-shelf",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "python3 -m http.server 4173",
-    "test": "node --test"
+    "test": "node --test tests/*.test.mjs games/dont-say-it/tests/*.test.mjs games/tapple/tests/*.test.mjs"
   }
 }

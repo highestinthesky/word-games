@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en" data-theme="hum">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="A local taboo word game." />
+    <title>Don’t Say It</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;800&family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./app.js?v=2"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#game">Skip to game</a>
+
+    <header class="nav-slab" aria-label="Game header">
+      <a class="brand" href="../../" aria-label="Return to Game Shelf">
+        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <span class="brand-copy">
+          <strong>DON’T SAY IT</strong>
+        </span>
+      </a>
+      <nav class="slab-nav" aria-label="Game options">
+        <button class="nav-button" id="rulesButton" type="button">Rules</button>
+        <button class="nav-button" id="settingsButton" type="button">Setup</button>
+        <button class="nav-button" id="newGameButton" type="button">New game</button>
+        <button class="nav-button fullscreen-button" id="fullscreenButton" type="button" aria-label="Enter full screen" aria-pressed="false"><span aria-hidden="true">⛶</span></button>
+      </nav>
+    </header>
+
+    <main class="game-shell" id="game">
+      <aside class="team-rail" aria-labelledby="teamsHeading">
+        <div class="team-rail__head">
+          <h2 id="teamsHeading">Teams</h2>
+          <button class="icon-button" id="addTeamButton" type="button" aria-label="Add a team">+</button>
+        </div>
+        <div class="team-list" id="teamList"></div>
+      </aside>
+
+      <section class="game-workbench" aria-labelledby="cardWord">
+        <div class="round-bar">
+          <div class="turn-copy">
+            <strong id="activeTeamName">Team Sun</strong>
+          </div>
+
+          <button class="timer" id="timerButton" type="button" aria-label="Pause timer" disabled>
+            <span class="timer__track" aria-hidden="true"><span id="timerFill"></span></span>
+            <span class="timer__time" id="timerText">60</span>
+          </button>
+        </div>
+
+        <div class="card-stage" id="cardStage">
+          <article class="word-card" id="wordCard" data-state="idle" aria-live="polite">
+            <div class="card-face">
+              <h1 id="cardWord">Ready?</h1>
+              <div class="forbidden-block">
+                <p>Don’t say</p>
+                <ul id="forbiddenWords"></ul>
+              </div>
+            </div>
+
+            <div class="start-panel" id="startPanel">
+              <h2>Ready?</h2>
+              <button class="btn btn--pear btn--lg" id="startRoundButton" type="button">
+                Play
+              </button>
+            </div>
+          </article>
+        </div>
+
+        <div class="answer-actions" aria-label="Card result">
+          <button class="btn btn--mint answer-button" id="correctButton" type="button" disabled>Got it +1</button>
+          <button class="btn btn--soft answer-button" id="skipButton" type="button" disabled>Skip</button>
+          <button class="btn btn--coral answer-button" id="tabooButton" type="button" disabled>Taboo −1</button>
+        </div>
+      </section>
+    </main>
+
+    <dialog class="game-dialog" id="settingsDialog" aria-labelledby="settingsTitle">
+      <form method="dialog" id="settingsForm">
+        <div class="dialog-head">
+          <h2 id="settingsTitle">Setup</h2>
+          <button class="icon-button" value="cancel" aria-label="Close setup">×</button>
+        </div>
+
+        <fieldset>
+          <legend>Time</legend>
+          <div class="choice-row" id="durationChoices">
+            <label><input type="radio" name="duration" value="30" aria-label="30 seconds" /> <span>30s</span></label>
+            <label><input type="radio" name="duration" value="45" aria-label="45 seconds" /> <span>45s</span></label>
+            <label><input type="radio" name="duration" value="60" aria-label="60 seconds" /> <span>60s</span></label>
+            <label><input type="radio" name="duration" value="90" aria-label="90 seconds" /> <span>90s</span></label>
+            <label><input type="radio" name="duration" value="120" aria-label="2 minutes" /> <span>2m</span></label>
+          </div>
+        </fieldset>
+
+        <label class="toggle-row">
+          <strong>Skip penalty</strong>
+          <input id="skipPenaltyInput" type="checkbox" role="switch" />
+        </label>
+
+        <fieldset>
+          <div class="fieldset-head">
+            <legend>Teams</legend>
+            <button class="text-button" id="dialogAddTeam" type="button">Add</button>
+          </div>
+          <div class="team-editor" id="teamEditor"></div>
+          <p class="field-help" id="teamHelp">2–8 unique names.</p>
+        </fieldset>
+
+        <div class="dialog-actions">
+          <button class="btn btn--soft" value="cancel">Cancel</button>
+          <button class="btn btn--pear" id="saveSettingsButton" value="default">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="game-dialog rules-dialog" id="rulesDialog" aria-labelledby="rulesTitle">
+      <div class="dialog-head">
+        <h2 id="rulesTitle">Rules</h2>
+        <button class="icon-button" id="closeRulesButton" type="button" aria-label="Close rules">×</button>
+      </div>
+      <ol class="rule-list">
+        <li><strong>Describe</strong><span>Avoid the five words.</span></li>
+        <li><strong>Score</strong><span>Got it +1 · Taboo −1 · Skip 0.</span></li>
+        <li><strong>Pass</strong><span>Next team when time ends.</span></li>
+      </ol>
+      <button class="btn btn--pear dialog-wide-button" id="rulesPlayButton" type="button">Play</button>
+    </dialog>
+
+    <dialog class="game-dialog summary-dialog" id="summaryDialog" aria-labelledby="summaryTitle">
+      <div class="summary-burst" aria-hidden="true"></div>
+      <h2 id="summaryTitle">Time!</h2>
+      <p class="summary-team" id="summaryTeam">Team Sun</p>
+      <strong class="summary-score" id="summaryScore">+0</strong>
+      <div class="summary-grid">
+        <span><strong id="summaryCorrect">0</strong> got it</span>
+        <span><strong id="summarySkipped">0</strong> skipped</span>
+        <span><strong id="summaryTaboo">0</strong> taboo</span>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn--soft" id="closeSummaryButton" type="button">Done</button>
+        <button class="btn btn--pear" id="nextTeamButton" type="button">Next</button>
+      </div>
+    </dialog>
+
+    <dialog class="game-dialog" id="resetDialog" aria-labelledby="resetTitle">
+      <div class="dialog-head">
+        <h2 id="resetTitle">Start a new game?</h2>
+        <button class="icon-button" id="cancelResetButton" type="button" aria-label="Keep current game">×</button>
+      </div>
+      <p class="dialog-copy">This resets every team’s score and returns every word to the deck. Your team names and setup stay in place.</p>
+      <div class="dialog-actions">
+        <button class="btn btn--soft" id="keepGameButton" type="button">Keep game</button>
+        <button class="btn btn--pear" id="resetGameButton" type="button">Start new game</button>
+      </div>
+    </dialog>
+
+    <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
+  </body>
+</html>

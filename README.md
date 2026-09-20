@@ -1,6 +1,6 @@
-# Don’t Say It
+# Game Shelf
 
-A compact, local-first taboo word game for a shared phone, tablet, or laptop.
+A local-first collection of shared-screen word games. The home page is a game selector; every game lives in its own folder so it can grow without changing another game’s implementation.
 
 ## Run it
 
@@ -10,20 +10,25 @@ npm run dev
 
 Then open `http://localhost:4173`.
 
-## What’s included
+## Current games
 
-- 2,457 unique target cards generated from 530 hand-authored semantic clusters
-- five closely related, familiar single-word forbidden clues on every card
-- a no-repeat deck: a shown target cannot return until a new game begins, even after a refresh
-- configurable 30, 45, 60, 90, or 120 second rounds
-- 2–8 editable teams with persistent scores
-- automatic “got it,” skip, and taboo scoring
-- optional skip penalties
-- a **New game** control that resets scores and reshuffles the complete deck while preserving team setup
-- keyboard controls and mobile layouts down to 320 px
-- local storage only; no account or backend
+- **Don’t Say It** — a playable clue game with 2,457 target cards, 2–8 editable teams, local persistence, keyboard controls, and responsive layouts.
+- **Category Sprint** — a playable, classroom-safe category game for one shared screen. Its research and design brief is in [docs/tapple-website-brief.md](docs/tapple-website-brief.md).
 
-## Keyboard controls
+## Structure
+
+```text
+games/
+  registry.js                 # The selector's small cross-game index
+  dont-say-it/                # Fully isolated existing game
+  tapple/                     # Isolated playable Category Sprint game
+docs/
+  tapple-website-brief.md     # Research, safety policy, and implementation plan
+```
+
+Each game owns its entry page, scripts, styles, data, and tests. Adding a game means creating a new folder and adding its lightweight manifest to `games/registry.js`; it does not require changing an existing game.
+
+## Don’t Say It keyboard controls
 
 - `G` or `→`: got it
 - `S` or `↓`: skip
@@ -36,4 +41,4 @@ Then open `http://localhost:4173`.
 npm test
 ```
 
-The tests enforce the 2,400-card minimum, the 300-set expansion, one-word/familiar card vocabulary, target uniqueness, five-word forbidden sets, cluster integrity, scoring, and the no-repeat deck behavior.
+The tests cover the game selector registry plus the Don’t Say It card, scoring, and no-repeat deck rules.

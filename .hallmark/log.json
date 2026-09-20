@@ -1,5 +1,32 @@
 [
   {
+    "date": "2026-09-19",
+    "macrostructure": "Index-First",
+    "theme": "Coral",
+    "enrichment": "none",
+    "brief": "Static-first GitHub Pages selector for choosing and launching shared-screen word games",
+    "nav": "N9 Edge-aligned minimal",
+    "footer": "Ft5 Statement"
+  },
+  {
+    "date": "2026-09-19",
+    "macrostructure": "Map / Diagram",
+    "theme": "Hum",
+    "enrichment": "none",
+    "brief": "Category Sprint, a one-smartboard original category game with classroom-safe prompts",
+    "nav": "N1b Three-zone header",
+    "footer": "Ft8 Marquee scroll"
+  },
+  {
+    "date": "2026-09-19",
+    "macrostructure": "Catalogue",
+    "theme": "Coral",
+    "enrichment": "none",
+    "brief": "Shared-screen multi-game selector with an isolated Taboo game and a Category Sprint plan",
+    "nav": "N5 Floating pill",
+    "footer": "Ft2 Inline rule"
+  },
+  {
     "date": "2026-09-16",
     "macrostructure": "Workbench",
     "theme": "Hum",

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="description" content="Category Sprint is a classroom-safe category game for one shared screen.">
+    <title>Category Sprint · Game Shelf</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./tokens.css?v=20260919">
+    <link rel="stylesheet" href="./styles.css?v=20260919">
+  </head>
+  <body>
+    <a class="skip-link" href="#game-board">Skip to the game board</a>
+    <main id="app"></main>
+    <p id="live-region" class="visually-hidden" aria-live="polite"></p>
+    <dialog id="setup-dialog" aria-labelledby="setup-title"></dialog>
+    <dialog id="rules-dialog" aria-labelledby="rules-title">
+      <form method="dialog" class="dialog-card">
+        <div class="dialog-card__head">
+          <div><p class="mono-label">How it works</p><h2 id="rules-title">Speak · tap · pass</h2></div>
+          <button class="icon-button" value="cancel" aria-label="Close rules">Close</button>
+        </div>
+        <ol class="rule-list">
+          <li>One player is up. Tap <strong>Start turn</strong> when they are ready.</li>
+          <li>They say a fitting answer aloud. The host taps its unused starting letter.</li>
+          <li>After the needed letters are marked, tap <strong>Pass turn</strong>.</li>
+          <li>If the group rejects an answer or time runs out, mark that player out. The last player earns the card.</li>
+        </ol>
+        <p class="dialog-note">The group decides what counts. This board never judges answers automatically.</p>
+        <div class="dialog-actions"><button class="btn btn--pear" value="default">Got it</button></div>
+      </form>
+    </dialog>
+    <dialog id="keys-dialog" aria-labelledby="keys-title">
+      <form method="dialog" class="dialog-card">
+        <div class="dialog-card__head">
+          <div><p class="mono-label">Laptop controls</p><h2 id="keys-title">Keyboard shortcuts</h2></div>
+          <button class="icon-button" value="cancel" aria-label="Close keyboard shortcuts">Close</button>
+        </div>
+        <dl class="shortcut-list">
+          <div><dt>Space</dt><dd>Start, pause, or resume a turn</dd></div>
+          <div><dt>A–Z</dt><dd>Mark an available letter during a running turn</dd></div>
+          <div><dt>Enter</dt><dd>Pass after required letters are marked</dd></div>
+          <div><dt>P</dt><dd>Pause or resume for a group decision</dd></div>
+        </dl>
+        <div class="dialog-actions"><button class="btn btn--pear" value="default">Back to game</button></div>
+      </form>
+    </dialog>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

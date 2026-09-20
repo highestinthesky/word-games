@@ -1,0 +1,85 @@
+/* Hallmark tokens · theme: Hum · paper-band: light · display: rounded-sans · accent: multi */
+:root {
+  --color-paper: oklch(97% 0.012 95);
+  --color-paper-2: oklch(94% 0.016 95);
+  --color-paper-3: oklch(90% 0.024 95);
+  --color-surface: oklch(99% 0.008 95);
+  --color-ink: oklch(20% 0.012 250);
+  --color-ink-soft: oklch(33% 0.014 250);
+  --color-muted: oklch(44% 0.016 250);
+  --color-rule: oklch(78% 0.018 95);
+  --color-rule-strong: oklch(56% 0.026 250);
+  --color-accent: oklch(86% 0.18 95);
+  --color-accent-deep: oklch(68% 0.16 95);
+  --color-accent-soft: oklch(94% 0.052 95);
+  --color-accent-ink: oklch(22% 0.035 95);
+  --color-cyan: oklch(72% 0.14 235);
+  --color-cyan-deep: oklch(47% 0.15 235);
+  --color-cyan-soft: oklch(93% 0.042 235);
+  --color-coral: oklch(70% 0.19 22);
+  --color-coral-deep: oklch(51% 0.19 22);
+  --color-coral-soft: oklch(94% 0.045 22);
+  --color-mint: oklch(80% 0.13 150);
+  --color-mint-deep: oklch(43% 0.13 150);
+  --color-mint-soft: oklch(94% 0.04 150);
+  --color-focus: oklch(38% 0.16 245);
+  --color-danger: oklch(53% 0.2 25);
+  --color-danger-soft: oklch(94% 0.05 25);
+  --color-overlay: oklch(20% 0.012 250 / 0.54);
+  --color-shadow-contact: oklch(20% 0.012 250 / 0.16);
+  --color-shadow-ambient: oklch(20% 0.012 250 / 0.10);
+  --color-shadow-accent: oklch(76% 0.20 95 / 0.42);
+
+  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-label: "JetBrains Mono", ui-monospace, monospace;
+
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+  --space-4xl: 9rem;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-md: 1.25rem;
+  --text-lg: 1.563rem;
+  --text-xl: 1.953rem;
+  --text-2xl: 2.441rem;
+  --text-3xl: 3.052rem;
+  --text-display: clamp(2.75rem, 5vw + 1rem, 5.25rem);
+  --text-timer: clamp(4rem, 11vw, 9rem);
+  --text-timer-compact: clamp(3.5rem, 6vw, 6rem);
+
+  --radius-sm: 0.75rem;
+  --radius-md: 1rem;
+  --radius-card: 1.25rem;
+  --radius-lg: 1.75rem;
+  --radius-pill: 999px;
+
+  --rule-hair: 1px;
+  --rule-medium: 2px;
+  --page-gutter: clamp(var(--space-md), 3vw, var(--space-xl));
+  --page-max: 96rem;
+
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+  --dur-long: 420ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-snap: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --z-base: 1;
+  --z-raised: 10;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal: 400;
+  --z-toast: 500;
+}

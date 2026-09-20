@@ -1,12 +1,12 @@
 {
-  "date": "2026-09-16",
+  "date": "2026-09-19",
   "signals": {
     "framework": "vanilla HTML, CSS, and JavaScript",
-    "font_stack": "none found",
-    "palette": "none found",
+    "font_stack": "Bricolage Grotesque, Plus Jakarta Sans, and JetBrains Mono via Google Fonts",
+    "palette": "OKLCH tokens in the existing Hum game",
     "motion": "motion-cut; no library",
-    "spacing": "none found"
+    "spacing": "4-point semantic custom-property scale"
   },
-  "preserve": [],
-  "introduce": ["Hum token system", "Workbench macrostructure", "microinteraction discipline", "responsive rules"]
+  "preserve": ["the existing Don’t Say It Hum tokens, font stack, and local-first behavior inside its isolated folder"],
+  "introduce": ["Coral selector token system", "Catalogue macrostructure", "game manifest registry", "shared-screen Category Sprint brief", "isolated Hum Category Sprint board with reviewed local content"]
 }
