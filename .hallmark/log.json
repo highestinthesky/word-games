@@ -1,6 +1,16 @@
 [
   {
     "date": "2026-09-19",
+    "scope": "app",
+    "macrostructure": "Index-First (shelf) / Workbench (games)",
+    "theme": "Hum",
+    "enrichment": "none",
+    "brief": "Multi-page redesign unifying the shelf and both games onto one design.md system: canonical tokens.css, one .btn/.nav-link/.icon-button component set, shared wordmark + Statement footer, fixed the mobile-hidden Rules control and score-card legibility in Category Sprint",
+    "nav": "Shared wordmark + nav-link header, never breakpoint-hidden",
+    "footer": "Ft5 Statement (all pages; Category Sprint shows it only outside active rounds)"
+  },
+  {
+    "date": "2026-09-19",
     "macrostructure": "Index-First",
     "theme": "Coral",
     "enrichment": "none",

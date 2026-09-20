@@ -11,8 +11,8 @@
       href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;800&family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css" />
-    <script type="module" src="./app.js?v=2"></script>
+    <link rel="stylesheet" href="./styles.css?v=20260919-4" />
+    <script type="module" src="./app.js?v=20260919-4"></script>
   </head>
   <body>
     <a class="skip-link" href="#game">Skip to game</a>
@@ -20,15 +20,13 @@
     <header class="nav-slab" aria-label="Game header">
       <a class="brand" href="../../" aria-label="Return to Game Shelf">
         <span class="brand-mark" aria-hidden="true"><span></span></span>
-        <span class="brand-copy">
-          <strong>DON’T SAY IT</strong>
-        </span>
+        <span class="wordmark">Game Shelf <span>/ Don’t Say It</span></span>
       </a>
       <nav class="slab-nav" aria-label="Game options">
-        <button class="nav-button" id="rulesButton" type="button">Rules</button>
-        <button class="nav-button" id="settingsButton" type="button">Setup</button>
-        <button class="nav-button" id="newGameButton" type="button">New game</button>
-        <button class="nav-button fullscreen-button" id="fullscreenButton" type="button" aria-label="Enter full screen" aria-pressed="false"><span aria-hidden="true">⛶</span></button>
+        <button class="nav-link" id="rulesButton" type="button">Rules</button>
+        <button class="nav-link" id="settingsButton" type="button">Setup</button>
+        <button class="nav-link" id="newGameButton" type="button">New game</button>
+        <button class="icon-button fullscreen-button" id="fullscreenButton" type="button" aria-label="Enter full screen" aria-pressed="false"><span aria-hidden="true">⛶</span></button>
       </nav>
     </header>
 
@@ -79,6 +77,14 @@
         </div>
       </section>
     </main>
+
+    <footer class="statement-footer">
+      <p class="statement-footer__line">Say everything but the word.</p>
+      <div class="statement-footer__meta">
+        <span>Game Shelf</span>
+        <span>2–8 teams · one shared screen</span>
+      </div>
+    </footer>
 
     <dialog class="game-dialog" id="settingsDialog" aria-labelledby="settingsTitle">
       <form method="dialog" id="settingsForm">

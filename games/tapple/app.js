@@ -167,6 +167,7 @@ function board() {
           <p class="mono-label">One board. One host. Everyone plays.</p>
           <h1 id="welcome-title">Set the room.</h1>
           <p>Choose names, then draw a reviewed category. Players answer aloud while one person runs the board.</p>
+          <button class="btn btn--outline btn--sm" data-action="open-rules" type="button">How to play</button>
         </div>
         <div class="welcome-map" aria-label="Game flow"><span>Speak</span><i aria-hidden="true"></i><span>Tap</span><i aria-hidden="true"></i><span>Pass</span></div>
       </section>
@@ -253,7 +254,7 @@ function dock() {
       <div class="action-dock__hint"><span class="mono-label">Host control</span><p>${round?.status === "running" ? "Tap a letter, then pass it on." : "The timer only runs after you start a turn."}</p></div>
       <div class="action-dock__buttons">
         ${canPause ? `<button class="btn btn--soft" data-action="pause-turn" type="button">Pause</button>` : ""}
-        ${canOut ? `<button class="btn btn--danger" data-action="mark-out" type="button">Mark out</button>` : ""}
+        ${canOut ? `<button class="btn btn--coral" data-action="mark-out" type="button">Mark out</button>` : ""}
         ${canSkip ? `<button class="btn btn--outline" data-action="skip-category" type="button">Skip category</button>` : ""}
         <button class="btn btn--${action.tone} btn--lg" data-action="${action.action}" type="button" ${action.disabled ? "disabled" : ""}>${action.label}</button>
       </div>
@@ -262,16 +263,28 @@ function dock() {
 }
 
 function render() {
-  const marquee = "SPEAK · TAP · PASS · GROUP DECIDES · ONE BOARD · ";
+  const showFooter = !state.round;
   app.innerHTML = `
     <div class="game-shell">
       <header class="topbar">
         <a class="wordmark" href="../../" aria-label="Return to Game Shelf">Game Shelf <span>/ Category Sprint</span></a>
-        <div class="topbar__center"><button class="nav-link" data-action="open-rules" type="button">Rules</button><button class="nav-link" data-action="open-keys" type="button">Keys</button><span class="nav-note">Classroom Safe · no phones</span></div>
-        <div class="topbar__actions"><button class="btn btn--outline btn--sm" data-action="open-setup" type="button">Setup</button><button class="btn btn--cyan btn--sm" data-action="toggle-fullscreen" type="button">Fullscreen</button></div>
+        <div class="topbar__actions">
+          <button class="nav-link" data-action="open-rules" type="button">Rules</button>
+          <button class="nav-link" data-action="open-keys" type="button">Keys</button>
+          <span class="nav-note">Classroom Safe · no phones</span>
+          <button class="btn btn--outline btn--sm" data-action="open-setup" type="button">Setup</button>
+          <button class="icon-button" data-action="toggle-fullscreen" type="button" aria-label="${document.fullscreenElement ? "Exit full screen" : "Enter full screen"}" aria-pressed="${Boolean(document.fullscreenElement)}"><span aria-hidden="true">⛶</span></button>
+        </div>
       </header>
       <div class="game-content">${scoreBoard()}${board()}${dock()}</div>
-      <footer class="foot-marquee" aria-label="Game principles"><div class="foot-marquee__track" aria-hidden="true"><span>${marquee}</span><span>${marquee}</span></div><p class="visually-hidden">Speak, tap, pass. The group decides what counts. One shared board.</p></footer>
+      ${showFooter ? `
+      <footer class="statement-footer">
+        <p class="statement-footer__line">The group is the referee.</p>
+        <div class="statement-footer__meta">
+          <span>Game Shelf</span>
+          <span>Classroom Safe · no phones</span>
+        </div>
+      </footer>` : ""}
       ${toast ? `<div class="toast" role="status">${escapeHtml(toast)}</div>` : ""}${burst ? `<span class="success-burst" aria-hidden="true"></span>` : ""}
     </div>
   `;
@@ -296,7 +309,7 @@ function renderSetup(draft) {
   const namesMarkup = names.map((name, index) => `<label class="field"><span>Player ${index + 1}</span><input name="player-${index}" value="${escapeHtml(name)}" autocomplete="off" maxlength="24" required></label>`).join("");
   setupDialog.innerHTML = `
     <form class="dialog-card setup-form">
-      <div class="dialog-card__head"><div><p class="mono-label">Host setup</p><h2 id="setup-title">Set the room up.</h2></div><button class="icon-button" data-action="close-setup" type="button">Close</button></div>
+      <div class="dialog-card__head"><div><p class="mono-label">Host setup</p><h2 id="setup-title">Set the room up.</h2></div><button class="icon-button" data-action="close-setup" type="button" aria-label="Close setup">×</button></div>
       <p class="dialog-note">Saving starts a fresh game and clears the current round.</p>
       <div class="setup-grid">
         <label class="field"><span>Players</span><select name="playerCount">${countOptions}</select></label>
