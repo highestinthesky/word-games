@@ -13,7 +13,7 @@ consult it.
 - Axes · paper-band: light · display-style: rounded-sans · accent-hue: multi
 - Macrostructure family · every surface is app-shaped, not marketing-shaped:
   - **Shelf (home)** · Index-First — a single list of game entries, no hero enrichment
-  - **Games** · Workbench — a live playable surface with persistent chrome (header, board, action dock); each game's internal board layout is its own (Don't Say It is a card workbench, Category Sprint is a multi-panel board), but the header, footer, buttons, and tokens are identical
+  - **Games** · Workbench — a live playable surface with persistent chrome (header, board, action dock); each game's internal board layout is its own (Taboo is a card workbench, Tapple is a multi-panel board), but the header, footer, buttons, and tokens are identical
 
 ## Tokens (canonical · `tokens.css` is the source of truth)
 
@@ -75,15 +75,15 @@ shadow formulas is exactly how the site drifted out of sync before this pass.
 ## Shared chrome
 
 - **Wordmark.** Every page's header starts with a link back to the shelf (`/` from the root, `../../` from a game folder), styled with `--font-wordmark`, weight 800, tracking `-0.035em`. A game page appends `/ <Game Name>` in the softer `--color-ink-soft` right after it, in `--font-display` — this suffix may hide below 30rem width, but the "Game Shelf" text itself is never hidden or clipped at any width.
-- **Header actions.** Every game-page control (Rules, Setup, New game / Keys, Fullscreen) is a `.nav-link` pill (ghost background, fills on hover/press) or a `.btn--sm`. Header actions are **never** removed or `display: none`'d at any viewport width — they may wrap to a second row, but a control that exists on desktop must stay reachable on a phone. This was the concrete bug this pass fixed: Category Sprint's Rules button disappeared below 640px.
-- **Footer.** Every page ends in the same **Statement** footer: one short display sentence (≤ 38ch), a hairline rule, then a muted meta row. No two pages repeat the same sentence. No scrolling/marquee text anywhere on the site — it reads as filler, not signal. **Exception:** a kiosk-style game screen (Category Sprint's board) may omit the footer while a round is active — the board's own min-heights already fill most laptop-height viewports, and the brief requires the timer, letter bank, and action dock to stay visible without scrolling. Show the footer on that game's welcome/setup screen only, where there's no time pressure and the room exists.
+- **Header actions.** Every game-page control (Rules, Setup, New game / Keys, Fullscreen) is a `.nav-link` pill (ghost background, fills on hover/press) or a `.btn--sm`. Header actions are **never** removed or `display: none`'d at any viewport width — they may wrap to a second row, but a control that exists on desktop must stay reachable on a phone. This was the concrete bug this pass fixed: Tapple's Rules button disappeared below 640px.
+- **Footer.** Every page ends in the same **Statement** footer: one short display sentence (≤ 38ch), a hairline rule, then a muted meta row. No two pages repeat the same sentence. No scrolling/marquee text anywhere on the site — it reads as filler, not signal. **Exception:** a kiosk-style game screen (Tapple's board) may omit the footer while a round is active — the board's own min-heights already fill most laptop-height viewports, and the brief requires the timer, letter bank, and action dock to stay visible without scrolling. Show the footer on that game's welcome/setup screen only, where there's no time pressure and the room exists.
 - **Mono-label / eyebrow.** `font-family: var(--font-label); font-size: var(--text-xs); letter-spacing: 0.075em; text-transform: uppercase;` — used for status words (`UP NOW`, `IN ROUND`, `FIRST TO 3`), never for full sentences.
 
 ## Per-surface allowances
 
 - The shelf (root) lists games; it must not carry gameplay chrome (no timers, no scoreboards).
 - Each game keeps its own board layout, its own JS state machine, and its own copy — those are the parts that make it a different game.
-- The wordmark itself carries no per-game icon or mark — plain text plus the `/ Game name` suffix, identical markup on the shelf and every game. A prior pass gave Don't Say It a one-off "brand-mark" face icon; it read as an inconsistent logo against the other two surfaces and was removed. Don't reintroduce a per-game wordmark icon without updating this file first.
+- The wordmark itself carries no per-game icon or mark — plain text plus the `/ Game name` suffix, identical markup on the shelf and every game. A prior pass gave Taboo a one-off "brand-mark" face icon; it read as an inconsistent logo against the other two surfaces and was removed. Don't reintroduce a per-game wordmark icon without updating this file first.
 
 ## What every page MUST share
 

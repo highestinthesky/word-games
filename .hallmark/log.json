@@ -1,5 +1,15 @@
 [
   {
+    "date": "2026-09-22",
+    "scope": "Tapple gameplay and shelf names",
+    "macrostructure": "Workbench (game) / Index-First (shelf)",
+    "theme": "Hum",
+    "enrichment": "none",
+    "brief": "Immediate Tapple turns, 131 playable categories, timeout decision, player revival, stronger available-letter highlight, and reduced board copy; display names Taboo and Tapple",
+    "nav": "Shared wordmark and always-reachable header actions",
+    "footer": "Ft5 Statement on Tapple welcome only"
+  },
+  {
     "date": "2026-09-19",
     "scope": "app",
     "macrostructure": "Index-First (shelf) / Workbench (games)",

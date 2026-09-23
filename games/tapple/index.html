@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="description" content="Category Sprint is a classroom-safe category game for one shared screen.">
-    <title>Category Sprint · Game Shelf</title>
+    <meta name="description" content="Play Tapple on one shared screen.">
+    <title>Tapple · Game Shelf</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./tokens.css?v=20260919-4">
-    <link rel="stylesheet" href="./styles.css?v=20260919-4">
+    <link rel="stylesheet" href="./styles.css?v=20260922-1">
   </head>
   <body>
     <a class="skip-link" href="#game-board">Skip to the game board</a>
@@ -22,7 +22,7 @@
           <div><p class="mono-label">Start over</p><h2 id="reset-title">Start a new game?</h2></div>
           <button class="icon-button" data-action="close-reset" type="button" aria-label="Keep current game">×</button>
         </div>
-        <p class="dialog-note">This clears every score and refills the letter bank. Player names and settings stay the same.</p>
+        <p class="dialog-note">Clears scores and letters. Keeps names and settings.</p>
         <div class="dialog-actions">
           <button class="btn btn--outline" data-action="close-reset" type="button">Keep playing</button>
           <button class="btn btn--pear" data-action="confirm-reset" type="button">Start new game</button>
@@ -32,34 +32,43 @@
     <dialog id="rules-dialog" aria-labelledby="rules-title">
       <form method="dialog" class="dialog-card">
         <div class="dialog-card__head">
-          <div><p class="mono-label">How it works</p><h2 id="rules-title">Speak · tap · pass</h2></div>
+          <div><h2 id="rules-title">Rules</h2></div>
           <button class="icon-button" value="cancel" aria-label="Close rules">×</button>
         </div>
         <ol class="rule-list">
-          <li>One player is up. Tap <strong>Start turn</strong> when they are ready.</li>
-          <li>They say a fitting answer aloud. The host taps its unused starting letter.</li>
-          <li>After the needed letters are marked, tap <strong>Pass turn</strong>.</li>
-          <li>If the group rejects an answer or time runs out, mark that player out. The last player earns the card.</li>
+          <li>Start game draws a category and starts the clock.</li>
+          <li>Say an answer, then take its unused first letter. The next turn starts at once.</li>
+          <li>Out removes the current player. Revive brings a player back.</li>
+          <li>When time runs out, choose whether the player is out. The last player earns the category.</li>
         </ol>
-        <p class="dialog-note">The group decides what counts. This board never judges answers automatically.</p>
-        <div class="dialog-actions"><button class="btn btn--pear" value="default">Got it</button></div>
+        <div class="dialog-actions"><button class="btn btn--pear" value="default">Close</button></div>
       </form>
     </dialog>
     <dialog id="keys-dialog" aria-labelledby="keys-title">
       <form method="dialog" class="dialog-card">
         <div class="dialog-card__head">
-          <div><p class="mono-label">Laptop controls</p><h2 id="keys-title">Keyboard shortcuts</h2></div>
+          <div><h2 id="keys-title">Keys</h2></div>
           <button class="icon-button" value="cancel" aria-label="Close keyboard shortcuts">×</button>
         </div>
         <dl class="shortcut-list">
-          <div><dt>Space</dt><dd>Start, pause, or resume a turn</dd></div>
-          <div><dt>A–Z</dt><dd>Mark an available letter during a running turn</dd></div>
-          <div><dt>Enter</dt><dd>Pass after required letters are marked</dd></div>
-          <div><dt>P</dt><dd>Pause or resume for a group decision</dd></div>
+          <div><dt>Space</dt><dd>Pause / resume</dd></div>
+          <div><dt>A–Z</dt><dd>Take a letter</dd></div>
         </dl>
-        <div class="dialog-actions"><button class="btn btn--pear" value="default">Back to game</button></div>
+        <div class="dialog-actions"><button class="btn btn--pear" value="default">Close</button></div>
       </form>
     </dialog>
-    <script type="module" src="./app.js?v=20260919-4"></script>
+    <dialog id="timeout-dialog" aria-labelledby="timeout-title">
+      <div class="dialog-card">
+        <div class="dialog-card__head">
+          <div><p class="mono-label">Time is up</p><h2 id="timeout-title"><span class="timeout-player"></span> out?</h2></div>
+        </div>
+        <p class="dialog-note">Keep playing resets this player's clock.</p>
+        <div class="dialog-actions">
+          <button class="btn btn--soft" data-action="timeout-keep" type="button">Keep playing</button>
+          <button class="btn btn--coral" data-action="timeout-out" type="button">Out</button>
+        </div>
+      </div>
+    </dialog>
+    <script type="module" src="./app.js?v=20260922-1"></script>
   </body>
 </html>

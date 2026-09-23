@@ -10,7 +10,9 @@ test("classroom-safe categories are uniquely named, reviewed, and broad enough",
 
   assert.equal(new Set(ids).size, ids.length);
   assert.equal(new Set(prompts).size, prompts.length);
-  assert.ok(CLASSROOM_SAFE_PACK.categories.length >= 30);
+  assert.ok(CLASSROOM_SAFE_PACK.categories.length >= 100);
+  assert.ok(prompts.includes("Types of food"));
+  assert.ok(prompts.includes("Fast food restaurants"));
 
   for (const category of CLASSROOM_SAFE_PACK.categories) {
     assert.ok(category.minAnswers >= 8, category.id + " needs eight plausible answers");

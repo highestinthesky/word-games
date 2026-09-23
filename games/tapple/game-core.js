@@ -123,24 +123,11 @@ export function startRound(game, category) {
     pendingLetters: [],
     answersRequired: 1,
     remainingSeconds: next.settings.timerSeconds,
-    status: "ready",
+    status: "running",
     winnerId: null,
     overtime: 0
   };
   next.lastEvent = { type: "round-started", message: "Category drawn: " + category.prompt };
-
-  return next;
-}
-
-export function startTurn(game) {
-  const next = clone(game);
-  const round = assertRound(next);
-
-  assert(round.status === "ready", "This turn cannot start yet.");
-  round.status = "running";
-  round.remainingSeconds = next.settings.timerSeconds;
-  round.pendingLetters = [];
-  next.lastEvent = { type: "turn-started", playerId: round.activePlayerId };
 
   return next;
 }
@@ -150,7 +137,7 @@ export function markLetter(game, letter) {
   const round = assertRound(next);
   const normalized = String(letter).toUpperCase();
 
-  assert(round.status === "running", "Start the turn before choosing a letter.");
+  assert(round.status === "running", "Letters are available while the clock runs.");
   assert(LETTERS.includes(normalized), "Choose a letter from the bank.");
   assert(!round.usedLetters.includes(normalized), normalized + " has already been used.");
   assert(!round.pendingLetters.includes(normalized), normalized + " is already marked for this turn.");
@@ -159,7 +146,7 @@ export function markLetter(game, letter) {
   round.pendingLetters.push(normalized);
   next.lastEvent = { type: "letter-marked", letter: normalized };
 
-  return next;
+  return canPass(next) ? passTurn(next) : next;
 }
 
 export function passTurn(game) {
@@ -177,7 +164,7 @@ export function passTurn(game) {
     round.status = "overtime";
     next.lastEvent = { type: "overtime-ready", message: "Every letter is used. Draw an overtime category." };
   } else {
-    round.status = "ready";
+    round.status = "running";
     next.lastEvent = { type: "turn-passed", playerId: round.activePlayerId };
   }
 
@@ -199,6 +186,16 @@ export function resumeTurn(game) {
   assert(round.status === "paused", "Only a paused turn can be resumed.");
   round.status = "running";
   next.lastEvent = { type: "turn-resumed", playerId: round.activePlayerId };
+  return next;
+}
+
+export function continueExpiredTurn(game) {
+  const next = clone(game);
+  const round = assertRound(next);
+  assert(round.status === "expired", "Only an expired turn can continue.");
+  round.status = "running";
+  round.remainingSeconds = next.settings.timerSeconds;
+  next.lastEvent = { type: "timeout-overruled", playerId: round.activePlayerId };
   return next;
 }
 
@@ -239,13 +236,13 @@ export function eliminateActivePlayer(game, reason = "out") {
   }
 
   round.activePlayerId = nextActiveId(round, playerId);
-  round.status = "ready";
+  round.status = "running";
   const player = getPlayer(next, playerId);
   next.lastEvent = {
     type: "player-out",
     playerId,
     reason,
-    message: player.name + " is out. Start the next turn when the board is ready."
+    message: player.name + " is out."
   };
 
   return next;
@@ -263,12 +260,32 @@ export function startOvertime(game, category) {
   round.pendingLetters = [];
   round.answersRequired += 1;
   round.remainingSeconds = next.settings.timerSeconds;
-  round.status = "ready";
+  round.status = "running";
   round.overtime += 1;
   next.lastEvent = {
     type: "overtime-started",
     message: "Overtime " + round.overtime + ": " + round.answersRequired + " letters per turn."
   };
 
+  return next;
+}
+
+export function revivePlayer(game, playerId) {
+  const next = clone(game);
+  const round = assertRound(next);
+  assert(round.turnOrder.includes(playerId), "Choose a player in this round.");
+  assert(!round.activeIds.includes(playerId), "That player is already in.");
+
+  if (round.status === "complete") {
+    const winner = getPlayer(next, round.winnerId);
+    winner.score -= 1;
+    round.winnerId = null;
+    next.phase = "playing";
+    round.status = "paused";
+  }
+
+  round.activeIds.push(playerId);
+  round.activeIds.sort((a, b) => round.turnOrder.indexOf(a) - round.turnOrder.indexOf(b));
+  next.lastEvent = { type: "player-revived", playerId };
   return next;
 }

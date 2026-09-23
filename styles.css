@@ -226,10 +226,6 @@ main {
   font-weight: 700;
 }
 
-.section-head p {
-  color: var(--color-muted);
-}
-
 .game-index {
   border-block-end: var(--rule-hair) solid var(--color-rule-strong);
   scroll-margin-block-start: var(--space-md);
@@ -310,22 +306,6 @@ main {
   color: var(--color-rule-strong);
 }
 
-.game-loop {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-xs);
-  padding-block-start: var(--space-xs);
-  color: var(--color-ink-soft);
-  font-size: var(--text-sm);
-  font-weight: 700;
-}
-
-.game-loop b {
-  color: var(--color-accent-deep);
-  font-weight: 500;
-}
-
 .game-preview {
   display: grid;
   min-inline-size: 0;
@@ -340,18 +320,13 @@ main {
 }
 
 .game-preview--clue {
+  align-content: center;
+  justify-items: center;
   background: var(--color-accent-soft);
 }
 
 .game-preview--category {
   background: var(--color-cyan-soft);
-}
-
-.game-preview__label,
-.game-preview__rule {
-  color: var(--color-ink-soft);
-  font-size: var(--text-sm);
-  font-weight: 700;
 }
 
 .game-preview__word,
@@ -466,7 +441,6 @@ main {
     align-items: end;
   }
 
-  .section-head p,
   .game-entry__action,
   .statement-footer__meta span:last-child {
     justify-self: end;

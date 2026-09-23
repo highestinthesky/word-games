@@ -1,4 +1,4 @@
-import { CARDS } from "./cards.js";
+import { CARDS } from "./cards.js?v=20260922-2";
 import {
   areTeamNamesValid,
   formatSignedScore,

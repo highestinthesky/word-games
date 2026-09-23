@@ -12,8 +12,8 @@ Then open `http://localhost:4173`.
 
 ## Current games
 
-- **Don’t Say It** — a playable clue game with 2,457 target cards, 2–8 editable teams, local persistence, keyboard controls, and responsive layouts.
-- **Category Sprint** — a playable, classroom-safe category game for one shared screen. Its research and design brief is in [docs/tapple-website-brief.md](docs/tapple-website-brief.md).
+- **Taboo** — a playable clue game with 323 reviewed cards, 2–8 editable teams, local persistence, keyboard controls, and responsive layouts.
+- **Tapple** — a playable category game with 131 prompts for one shared screen. Its original research and design brief is in [docs/tapple-website-brief.md](docs/tapple-website-brief.md).
 
 ## Structure
 
@@ -21,14 +21,14 @@ Then open `http://localhost:4173`.
 games/
   registry.js                 # The selector's small cross-game index
   dont-say-it/                # Fully isolated existing game
-  tapple/                     # Isolated playable Category Sprint game
+  tapple/                     # Isolated playable Tapple game
 docs/
   tapple-website-brief.md     # Research, safety policy, and implementation plan
 ```
 
 Each game owns its entry page, scripts, styles, data, and tests. Adding a game means creating a new folder and adding its lightweight manifest to `games/registry.js`; it does not require changing an existing game.
 
-## Don’t Say It keyboard controls
+## Taboo keyboard controls
 
 - `G` or `→`: got it
 - `S` or `↓`: skip
@@ -41,4 +41,4 @@ Each game owns its entry page, scripts, styles, data, and tests. Adding a game m
 npm test
 ```
 
-The tests cover the game selector registry plus the Don’t Say It card, scoring, and no-repeat deck rules.
+The tests cover the game selector registry plus Taboo cards and Tapple turns, scoring, and categories.

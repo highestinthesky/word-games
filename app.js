@@ -2,13 +2,6 @@ import { GAMES } from "./games/registry.js";
 
 const entries = [...document.querySelectorAll("[data-game-id]")];
 const gamesById = new Map(GAMES.map((game) => [game.id, game]));
-const gameCount = document.querySelector("#game-count");
-
-if (gameCount) {
-  const readyCount = GAMES.filter((game) => game.status === "ready").length;
-  gameCount.textContent = `${readyCount} ${readyCount === 1 ? "game" : "games"} · no sign-in`;
-}
-
 for (const entry of entries) {
   const game = gamesById.get(entry.dataset.gameId);
   if (!game || game.status !== "ready") continue;
