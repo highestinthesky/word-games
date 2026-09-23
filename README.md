@@ -12,7 +12,7 @@ Then open `http://localhost:4173`.
 
 ## Current games
 
-- **Taboo** — a playable clue game with 323 reviewed cards, 2–8 editable teams, local persistence, keyboard controls, and responsive layouts.
+- **Taboo** — a playable clue game with 683 reviewed cards, 2–8 editable teams, local persistence, keyboard controls, and responsive layouts.
 - **Tapple** — a playable category game with 131 prompts for one shared screen. Its original research and design brief is in [docs/tapple-website-brief.md](docs/tapple-website-brief.md).
 
 ## Structure

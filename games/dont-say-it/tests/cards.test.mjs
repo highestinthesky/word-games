@@ -4,11 +4,11 @@ import { buildCards, CARDS, CARD_COUNT, isPlayableWord } from "../cards.js";
 import { CARD_GROUPS } from "../reviewed-cards.js";
 
 test("the reviewed deck has hundreds of unique, familiar targets", () => {
-  assert.ok(CARD_COUNT >= 300, `expected at least 300 cards, found ${CARD_COUNT}`);
+  assert.ok(CARD_COUNT >= 646, `expected at least twice the original 323 cards, found ${CARD_COUNT}`);
   const targets = CARDS.map((card) => card.target.toLowerCase());
   assert.equal(new Set(targets).size, CARD_COUNT);
   assert.deepEqual(
-    ["pizza", "hospital", "dog", "computer"].every((target) => targets.includes(target)),
+    ["pizza", "hospital", "dog", "computer", "hammer", "avocado", "flamingo", "thermostat"].every((target) => targets.includes(target)),
     true
   );
   for (const obscure of ["euphonium", "caecilian", "makemake", "perigee", "mouflon"]) {
@@ -45,6 +45,8 @@ test("common targets block their most likely descriptions and associations", () 
   assert.deepEqual(cards.get("Pizza"), ["Cheese", "Crust", "Pepperoni", "Slice", "Delivery"]);
   assert.deepEqual(cards.get("Hospital"), ["Doctor", "Nurse", "Patient", "Emergency", "Surgery"]);
   assert.deepEqual(cards.get("Dog"), ["Bark", "Puppy", "Pet", "Leash", "Fetch"]);
+  assert.deepEqual(cards.get("Hammer"), ["Head", "Handle", "Pound", "Nails", "Carpenter"]);
+  assert.deepEqual(cards.get("Avocado"), ["Green", "Pit", "Creamy", "Toast", "Guacamole"]);
 });
 
 test("invalid or duplicate target-specific cards cannot enter the deck", () => {

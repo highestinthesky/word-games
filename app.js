@@ -1,4 +1,4 @@
-import { GAMES } from "./games/registry.js";
+import { GAMES } from "./games/registry.js?v=20260922-3";
 
 const entries = [...document.querySelectorAll("[data-game-id]")];
 const gamesById = new Map(GAMES.map((game) => [game.id, game]));

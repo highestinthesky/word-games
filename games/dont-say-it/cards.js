@@ -1,4 +1,4 @@
-import { CARD_GROUPS } from "./reviewed-cards.js";
+import { CARD_GROUPS } from "./reviewed-cards.js?v=20260922-3";
 
 // A card is written for its own target. The first three forbidden words block
 // a direct description; the final two block another likely clue route.

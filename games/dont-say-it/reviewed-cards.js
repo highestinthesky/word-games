@@ -1,3 +1,5 @@
+import { ADDITIONAL_CARD_GROUPS } from "./additional-reviewed-cards.js";
+
 // Each card has two clue routes: a direct description (three words) and a
 // common setting, use, or association (two words). The UI shows all five.
 export const CARD_GROUPS = [
@@ -353,5 +355,6 @@ export const CARD_GROUPS = [
     ["Swimsuit", ["wear", "water", "swim"], ["beach", "pool"]],
     ["Raincoat", ["wear", "waterproof", "jacket"], ["umbrella", "storm"]],
     ["Helmet", ["head", "protect", "hard"], ["bike", "sports"]]
-  ]]
+  ]],
+  ...ADDITIONAL_CARD_GROUPS
 ];

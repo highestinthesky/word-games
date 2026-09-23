@@ -6,6 +6,6 @@ export const game = Object.freeze({
   href: "./games/dont-say-it/",
   status: "ready",
   format: "clue",
-  facts: Object.freeze(["2–8 teams", "30–120 sec rounds", "323 cards"]),
+  facts: Object.freeze(["2–8 teams", "30–120 sec rounds", "683 cards"]),
   loop: Object.freeze(["Describe", "Guess", "Score"])
 });
