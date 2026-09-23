@@ -654,10 +654,12 @@ select:disabled {
   line-height: 0.9;
 }
 
-.board--welcome,
-.board--result,
-.board--overtime {
+.board.board--welcome,
+.board.board--result,
+.board.board--overtime {
   display: grid;
+  grid-template-areas: none;
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(var(--space-lg), 5vw, var(--space-3xl));
   min-block-size: 22rem;
   padding: clamp(var(--space-xl), 6vw, var(--space-3xl));
@@ -673,6 +675,7 @@ select:disabled {
 .overtime-copy,
 .result-banner {
   display: grid;
+  min-inline-size: 0;
   gap: var(--space-md);
   max-inline-size: 44rem;
 }
@@ -687,6 +690,14 @@ select:disabled {
 .welcome-copy h1 {
   font-size: min(12vw, var(--text-display));
   white-space: nowrap;
+}
+
+/* Result names and overtime copy need the same narrow-width sizing. */
+.result-banner h1,
+.overtime-copy h1 {
+  font-size: min(12vw, var(--text-display));
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
 .board--result {
