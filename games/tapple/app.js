@@ -1,18 +1,20 @@
-import { CLASSROOM_SAFE_PACK, getCategoryById, shuffleCategories } from "./categories.js";
+import { CATEGORY_PACK_VERSION, CLASSROOM_SAFE_PACK, drawCategory, upgradeDrawBag } from "./categories.js?v=20260924-5";
 import {
   LETTERS,
+  chooseRoundModifier,
   continueExpiredTurn,
   createGame,
   eliminateActivePlayer,
   getActivePlayer,
   markLetter,
   pauseTurn,
+  replaceCategory,
   resumeTurn,
   revivePlayer,
   startOvertime,
   startRound,
   tickTimer
-} from "./game-core.js";
+} from "./game-core.js?v=20260924-5";
 
 const STORAGE_KEY = "word-games:category-sprint:v1";
 const DEFAULT_NAMES = ["Player 1", "Player 2", "Player 3"];
@@ -34,15 +36,17 @@ function escapeHtml(value) {
   }[character]));
 }
 
-function freshGame(names = DEFAULT_NAMES, settings = {}) {
+function freshGame(names = DEFAULT_NAMES, settings = {}, categoryProgress = {}) {
   return {
     ...createGame({
       names,
       winningScore: settings.winningScore ?? 3,
       timerSeconds: settings.timerSeconds ?? 10
     }),
-    drawBag: [],
-    lastCategoryId: null
+    drawBag: categoryProgress.drawBag ?? [],
+    categoryPackVersion: CATEGORY_PACK_VERSION,
+    lastCategoryId: categoryProgress.lastCategoryId ?? null,
+    recentFamilies: categoryProgress.recentFamilies ?? []
   };
 }
 
@@ -52,7 +56,29 @@ function loadState() {
     if (saved?.players?.length >= 2 && saved.settings?.timerSeconds && saved.settings?.winningScore) {
       // Older saved rounds stopped between turns. Resume them with the new flow.
       if (saved.round?.status === "ready") saved.round.status = "running";
-      return { ...saved, drawBag: saved.drawBag ?? [], lastCategoryId: saved.lastCategoryId ?? null };
+      const round = saved.round ? {
+        ...saved.round,
+        modifier: saved.round.modifier ?? null,
+        openLetter: saved.round.openLetter ?? null,
+        swapCategory: saved.round.swapCategory ?? null,
+        swapDone: saved.round.swapDone ?? false,
+        turnCounts: saved.round.turnCounts ?? Object.fromEntries(saved.round.turnOrder.map((id) => [id, 0])),
+        turnSeconds: saved.round.turnSeconds ?? saved.settings.timerSeconds * (saved.round.answersRequired > 1 ? 2 : 1),
+        turnsTaken: saved.round.turnsTaken ?? saved.round.usedLetters?.length ?? 0,
+        minTurnsBeforeOvertime: saved.round.minTurnsBeforeOvertime ?? saved.round.turnOrder.length,
+        phaseActiveIds: saved.round.phaseActiveIds ?? [...saved.round.activeIds],
+        phaseStarterId: saved.round.phaseStarterId ?? saved.round.turnOrder[0]
+      } : null;
+      return {
+        ...saved,
+        version: 2,
+        lastModifierRound: saved.lastModifierRound ?? 0,
+        round,
+        drawBag: upgradeDrawBag(CLASSROOM_SAFE_PACK.categories, saved.drawBag, saved.categoryPackVersion ?? 1),
+        categoryPackVersion: CATEGORY_PACK_VERSION,
+        lastCategoryId: saved.lastCategoryId ?? null,
+        recentFamilies: saved.recentFamilies ?? []
+      };
     }
   } catch {
     localStorage.removeItem(STORAGE_KEY);
@@ -78,19 +104,27 @@ function tell(message) {
 }
 
 function nextCategory() {
-  let bag = Array.isArray(state.drawBag) ? state.drawBag.filter((id) => getCategoryById(id)) : [];
-  if (!bag.length) {
-    bag = shuffleCategories(CLASSROOM_SAFE_PACK.categories).map((category) => category.id);
-    if (bag[0] === state.lastCategoryId && bag.length > 1) [bag[0], bag[1]] = [bag[1], bag[0]];
-  }
-  const id = bag.shift();
-  state = { ...state, drawBag: bag, lastCategoryId: id };
-  return getCategoryById(id);
+  const drawn = drawCategory({
+    categories: CLASSROOM_SAFE_PACK.categories,
+    drawBag: state.drawBag,
+    recentFamilies: state.recentFamilies,
+    lastCategoryId: state.lastCategoryId
+  });
+  state = { ...state, drawBag: drawn.drawBag, lastCategoryId: drawn.lastCategoryId, recentFamilies: drawn.recentFamilies };
+  return drawn.category;
 }
 
-function drawRound(overtime = false) {
+function drawRound(mode = "new") {
   const category = nextCategory();
-  state = overtime ? startOvertime(state, category) : startRound(state, category);
+  if (mode === "overtime") state = startOvertime(state, category);
+  else if (mode === "replace") {
+    const alternate = state.round.modifier === "category-swap" ? nextCategory() : null;
+    state = replaceCategory(state, category, alternate);
+  } else {
+    const chosen = chooseRoundModifier(state);
+    const modifier = chosen?.type === "category-swap" ? { ...chosen, category: nextCategory() } : chosen;
+    state = startRound(state, category, modifier);
+  }
   announce(category.prompt);
   commit();
 }
@@ -117,9 +151,26 @@ function syncTimer() {
   if (state.round?.status !== "running") return;
   timerId = window.setInterval(() => {
     state = tickTimer(state);
-    if (state.round.status === "expired") announce(getActivePlayer(state).name + " timed out.");
-    commit();
+    saveState();
+    if (state.round.status === "expired") {
+      announce(getActivePlayer(state).name + " timed out.");
+      syncTimer();
+      render();
+      syncTimeoutDialog();
+    } else {
+      updateTimerDisplay();
+    }
   }, 1000);
+}
+
+function updateTimerDisplay() {
+  const timer = app.querySelector(".timer-card");
+  if (!timer || !state.round) return;
+  const seconds = state.round.remainingSeconds;
+  timer.dataset.urgency = seconds <= 3 ? "high" : seconds <= 6 ? "medium" : "low";
+  timer.querySelector(".timer-card__count").textContent = String(seconds).padStart(2, "0");
+  timer.querySelector(".timer-card__count").setAttribute("aria-label", seconds + " seconds remaining");
+  timer.querySelector(".timer-card__track span").style.setProperty("--timer-progress", String(seconds / state.round.turnSeconds));
 }
 
 function scoreBoard() {
@@ -131,7 +182,7 @@ function scoreBoard() {
           const active = state.round?.activePlayerId === player.id;
           const out = state.round && !state.round.activeIds.includes(player.id);
           return `
-            <article class="score-card" data-accent="${index % 4}" data-active="${active && !out}" data-out="${out}" aria-label="${escapeHtml(player.name)}, ${player.score} cards${out ? ", out" : active ? ", up now" : ""}">
+            <article class="score-card" data-accent="${index % 4}" data-active="${active && !out}" data-out="${out}" aria-label="${escapeHtml(player.name)}, ${player.score} ${player.score === 1 ? "card" : "cards"}${out ? ", out" : active ? ", up now" : ""}">
               <span class="score-card__name">${escapeHtml(player.name)}</span>
               <span class="score-card__points">${player.score}</span>
               ${out ? `<button class="btn btn--mint btn--sm score-card__revive" type="button" data-action="revive-player" data-player-id="${player.id}" aria-label="Revive ${escapeHtml(player.name)}">Revive</button>` : ""}
@@ -146,12 +197,13 @@ function scoreBoard() {
 function letterButton(letter, round) {
   const used = round.usedLetters.includes(letter);
   const picked = round.pendingLetters.includes(letter);
-  const letterState = used ? "used" : picked ? "picked" : "ready";
-  const disabled = used || round.status !== "running";
-  const label = used ? letter + ", used" : picked ? letter + ", picked for this turn" : "Take letter " + letter;
+  const open = round.openLetter === letter;
+  const letterState = picked ? "picked" : used ? "used" : open ? "open" : "ready";
+  const disabled = used || picked || round.status !== "running";
+  const label = picked ? letter + ", picked for this turn" : used ? letter + ", used" : open ? "Take open letter " + letter + ", reusable" : "Take letter " + letter;
   return `
     <button class="letter" type="button" data-action="mark-letter" data-letter="${letter}" data-state="${letterState}" aria-label="${label}" ${disabled ? "disabled" : ""}>
-      <span class="letter__glyph">${letter}</span>
+      <span class="letter__glyph">${letter}</span>${open ? `<span class="letter__open" aria-hidden="true">∞</span>` : ""}
     </button>
   `;
 }
@@ -180,7 +232,7 @@ function board() {
   if (round.status === "overtime") {
     return `
       <section class="board board--overtime" id="game-board" aria-labelledby="overtime-title">
-        <div class="overtime-copy"><p class="mono-label">Overtime</p><h1 id="overtime-title">${round.answersRequired + 1} letters per turn</h1></div>
+        <div class="overtime-copy"><p class="mono-label">Overtime</p><h1 id="overtime-title">New category, two answers each turn</h1></div>
       </section>
     `;
   }
@@ -195,17 +247,23 @@ function board() {
   }
 
   const active = getActivePlayer(state);
-  const ratio = Math.max(0, round.remainingSeconds / state.settings.timerSeconds);
+  const ratio = Math.max(0, round.remainingSeconds / round.turnSeconds);
   const urgency = round.remainingSeconds <= 3 ? "high" : round.remainingSeconds <= 6 ? "medium" : "low";
+  const modifierLabel = round.overtime ? "Overtime · two answers"
+    : round.modifier === "double" ? "Double answers · extra time"
+    : round.openLetter ? "Open " + round.openLetter + " · new word each use"
+    : round.modifier === "category-swap" ? (round.swapDone ? "Category swapped · letters stay used" : "Category swaps after first lap")
+    : round.modifier === "speed-laps" ? "Speed laps · clock gets shorter" : "";
 
   return `
     <section class="board" id="game-board" aria-label="Current category round">
       <section class="turn-card" data-paused="${round.status === "paused" || round.status === "expired"}">
         <span class="mono-label">Up now</span><h1>${escapeHtml(active.name)}</h1>
-        ${round.answersRequired > 1 ? `<div class="turn-card__requirement"><strong>${round.pendingLetters.length}/${round.answersRequired}</strong><span>letters</span></div>` : ""}
+        ${round.answersRequired > 1 ? `<div class="turn-card__requirement"><strong>${round.pendingLetters.length}/${round.answersRequired}</strong><span>answers</span></div>` : ""}
       </section>
       <section class="category-card" aria-labelledby="category-prompt">
         <p id="category-prompt">${escapeHtml(round.category.prompt)}</p>
+        ${modifierLabel ? `<span class="modifier-label">${escapeHtml(modifierLabel)}</span>` : ""}
       </section>
       <section class="timer-card" data-status="${round.status}" data-urgency="${urgency}">
         <div class="timer-card__head"><span class="mono-label">Time</span><span class="keeper-mark" aria-hidden="true"><span></span></span></div>
@@ -233,14 +291,14 @@ function primary() {
 function dock() {
   const action = primary();
   const round = state.round;
-  const canSkip = round && ["running", "paused", "complete"].includes(round.status) && state.phase !== "game-complete";
+  const canSkip = round && ["running", "paused"].includes(round.status) && state.phase === "playing";
   const canPause = round?.status === "running";
   const canOut = round && ["running", "paused"].includes(round.status) && state.phase === "playing";
   return `
     <section class="action-dock" aria-label="Host controls">
       <div class="action-dock__buttons">
         ${canPause ? `<button class="btn btn--soft" data-action="pause-turn" type="button">Pause</button>` : ""}
-        ${canOut ? `<button class="btn btn--coral" data-action="mark-out" type="button">Out</button>` : ""}
+        ${canOut ? `<button class="btn btn--coral" data-action="mark-out" type="button">Mark out</button>` : ""}
         ${canSkip ? `<button class="btn btn--outline" data-action="skip-category" type="button">Skip category</button>` : ""}
         ${action ? `<button class="btn btn--${action.tone} btn--lg" data-action="${action.action}" type="button" ${action.disabled ? "disabled" : ""}>${action.label}</button>` : ""}
       </div>
@@ -335,8 +393,9 @@ function applyAction(action, target) {
   if (action === "open-rules") return openGuide(rulesDialog);
   if (action === "open-keys") return openGuide(keysDialog);
   if (action === "toggle-fullscreen") return toggleFullscreen();
-  if (action === "draw-round" || action === "skip-category") return drawRound(false);
-  if (action === "draw-overtime") return drawRound(true);
+  if (action === "draw-round") return drawRound();
+  if (action === "skip-category") return drawRound("replace");
+  if (action === "draw-overtime") return drawRound("overtime");
   if (action === "pause-turn") {
     state = pauseTurn(state); announce("Paused."); return commit();
   }
@@ -345,7 +404,7 @@ function applyAction(action, target) {
   }
   if (action === "mark-letter") {
     state = markLetter(state, target.dataset.letter);
-    announce(state.round.status === "overtime" ? "Overtime." : getActivePlayer(state).name + " is up.");
+    announce(state.round.status === "overtime" ? "Overtime." : state.lastEvent?.type === "category-swapped" ? state.lastEvent.message : getActivePlayer(state).name + " is up.");
     return commit();
   }
   if (action === "mark-out") {
@@ -363,7 +422,7 @@ function applyAction(action, target) {
     return commit();
   }
   if (action === "new-game") {
-    state = freshGame(state.players.map((player) => player.name), state.settings);
+    state = freshGame(state.players.map((player) => player.name), state.settings, state);
     return commit();
   }
 }
@@ -392,7 +451,7 @@ setupDialog.addEventListener("submit", (event) => {
   event.preventDefault();
   const draft = setupDraft();
   try {
-    state = freshGame(draft.names, draft);
+    state = freshGame(draft.names, draft, state);
     setupDialog.close();
     commit();
   } catch (problem) {
@@ -407,6 +466,12 @@ setupDialog.addEventListener("submit", (event) => {
 });
 
 document.addEventListener("fullscreenchange", render);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && state.round?.status === "running") {
+    state = pauseTurn(state);
+    commit();
+  }
+});
 timeoutDialog.addEventListener("cancel", (event) => event.preventDefault());
 document.addEventListener("keydown", (event) => {
   if (rulesDialog.open || keysDialog.open || setupDialog.open || resetDialog.open || timeoutDialog.open || event.metaKey || event.ctrlKey || event.altKey) return;

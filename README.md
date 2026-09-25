@@ -18,7 +18,7 @@ so you need `python3`. There's nothing to install.
 | Game   | Folder               | Players    | Content        |
 | ------ | -------------------- | ---------- | -------------- |
 | Taboo  | `games/dont-say-it/` | 2–8 teams  | 683 cards      |
-| Tapple | `games/tapple/`      | 2–8 players | 131 categories |
+| Tapple | `games/tapple/`      | 2–8 players | 108 categories |
 
 **Taboo:** describe the word on the card without saying any of its five
 forbidden words. Rounds last 30–120 seconds.
@@ -32,7 +32,8 @@ forbidden words. Rounds last 30–120 seconds.
 
 **Tapple:** name something in the category that starts with an unused
 letter, take that letter, and pass the turn before the 10- or 15-second
-timer runs out.
+base timer runs out. Rare rounds can change the answer count, letter bank,
+category, or clock.
 
 | Key       | Action                  |
 | --------- | ----------------------- |

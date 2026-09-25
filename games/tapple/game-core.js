@@ -1,4 +1,8 @@
 export const LETTERS = Object.freeze("ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""));
+export const OPEN_LETTERS = Object.freeze(["B", "C", "M", "P", "S", "T"]);
+
+const LOW_YIELD_LETTERS = new Set(["Q", "U", "V", "X", "Z"]);
+const MODIFIER_RATE = 0.12;
 
 export const DEFAULT_SETTINGS = Object.freeze({
   winningScore: 3,
@@ -43,6 +47,25 @@ function nextActiveId(round, fromId) {
   return null;
 }
 
+function overtimeIsDue(round) {
+  const remaining = LETTERS.filter((letter) => !round.usedLetters.includes(letter));
+  if (!remaining.length) return true;
+  if (round.turnsTaken < round.minTurnsBeforeOvertime) return false;
+
+  const activeCount = round.activeIds.length;
+  const ordinaryRemaining = remaining.filter((letter) => !LOW_YIELD_LETTERS.has(letter)).length;
+  const scarceLetters = remaining.length <= Math.min(14, activeCount + 5)
+    || ordinaryRemaining <= activeCount + 1;
+  const openLetterLimit = round.openLetter
+    && round.turnsTaken >= Math.max(12, round.turnOrder.length * 3);
+  return scarceLetters || openLetterLimit;
+}
+
+function setOvertimeReady(game) {
+  game.round.status = "overtime";
+  game.lastEvent = { type: "overtime-ready", message: "Few letters remain. Draw an overtime category." };
+}
+
 function resolveWinner(game, round) {
   const winnerId = round.activeIds[0];
   const winner = game.players.find((player) => player.id === winnerId);
@@ -69,14 +92,42 @@ export function createGame({ names, winningScore = DEFAULT_SETTINGS.winningScore
   assert(Number.isInteger(seconds) && seconds >= 5 && seconds <= 60, "Choose a timer from 5 to 60 seconds.");
 
   return {
-    version: 1,
+    version: 2,
     phase: "setup",
     settings: { winningScore: scoreTarget, timerSeconds: seconds },
     players: playerNames.map((name, index) => ({ id: "player-" + (index + 1), name, score: 0 })),
     roundNumber: 0,
+    lastModifierRound: 0,
     round: null,
     lastEvent: null
   };
+}
+
+export function chooseRoundModifier(game, random = Math.random) {
+  // The first two rounds establish the base rules. A special round cannot
+  // immediately follow another one, regardless of the random roll.
+  if (game.roundNumber < 2 || game.lastModifierRound === game.roundNumber) return null;
+  const roll = random();
+  if (roll >= MODIFIER_RATE) return null;
+  if (roll < MODIFIER_RATE / 4) return { type: "double" };
+  if (roll < MODIFIER_RATE / 2) return { type: "open-letter", letter: OPEN_LETTERS[Math.floor(random() * OPEN_LETTERS.length)] };
+  if (roll < MODIFIER_RATE * 3 / 4) return { type: "category-swap" };
+  return { type: "speed-laps" };
+}
+
+function applyTurnModifier(game, priorEvent = null) {
+  const round = game.round;
+  const completedLaps = Math.min(...round.activeIds.map((id) => round.turnCounts[id] ?? 0));
+  if (round.modifier === "speed-laps") {
+    round.turnSeconds = Math.max(Math.min(6, game.settings.timerSeconds), game.settings.timerSeconds - Math.min(2, completedLaps) * 2);
+  }
+  if (round.modifier === "category-swap" && !round.swapDone && completedLaps >= 1) {
+    round.category = round.swapCategory;
+    round.swapDone = true;
+    game.lastEvent = { type: "category-swapped", message: (priorEvent?.message ? priorEvent.message + " " : "") + "Category switched to " + round.category.prompt + "." };
+    return;
+  }
+  game.lastEvent = priorEvent ?? { type: "turn-passed", playerId: round.activePlayerId };
 }
 
 export function getPlayer(game, playerId) {
@@ -104,31 +155,73 @@ export function canPass(game) {
   );
 }
 
-export function startRound(game, category) {
+export function startRound(game, category, modifier = null) {
   assert(category?.id && category?.prompt, "Choose a reviewed category.");
   assert(game.phase !== "game-complete", "Start a new game before drawing another category.");
+  assert(!modifier || ["double", "open-letter", "category-swap", "speed-laps"].includes(modifier.type), "Choose a known round modifier.");
+  assert(modifier?.type !== "open-letter" || OPEN_LETTERS.includes(modifier.letter), "Choose a common open letter.");
+  assert(modifier?.type !== "category-swap" || (modifier.category?.id && modifier.category?.prompt && modifier.category.id !== category.id), "Choose a different second category.");
 
   const next = clone(game);
-  const turnOrder = next.players.map((player) => player.id);
+  const playerIds = next.players.map((player) => player.id);
+  const starterIndex = next.roundNumber % playerIds.length;
+  const turnOrder = [...playerIds.slice(starterIndex), ...playerIds.slice(0, starterIndex)];
+  const answersRequired = modifier?.type === "double" ? 2 : 1;
+  const turnSeconds = next.settings.timerSeconds * answersRequired;
 
   next.phase = "playing";
   next.roundNumber += 1;
+  if (modifier) next.lastModifierRound = next.roundNumber;
   next.round = {
     id: "round-" + next.roundNumber,
     category,
     turnOrder,
     activeIds: [...turnOrder],
     activePlayerId: turnOrder[0],
+    phaseActiveIds: [...turnOrder],
+    phaseStarterId: turnOrder[0],
     usedLetters: [],
     pendingLetters: [],
-    answersRequired: 1,
-    remainingSeconds: next.settings.timerSeconds,
+    answersRequired,
+    turnSeconds,
+    remainingSeconds: turnSeconds,
+    modifier: modifier?.type ?? null,
+    openLetter: modifier?.type === "open-letter" ? modifier.letter : null,
+    swapCategory: modifier?.type === "category-swap" ? modifier.category : null,
+    swapDone: false,
+    turnCounts: Object.fromEntries(turnOrder.map((id) => [id, 0])),
+    turnsTaken: 0,
+    minTurnsBeforeOvertime: turnOrder.length,
     status: "running",
     winnerId: null,
     overtime: 0
   };
   next.lastEvent = { type: "round-started", message: "Category drawn: " + category.prompt };
 
+  return next;
+}
+
+export function replaceCategory(game, category, swapCategory = null) {
+  assert(category?.id && category?.prompt, "Choose a reviewed category.");
+  const next = clone(game);
+  const round = assertRound(next);
+  assert(["running", "paused", "expired"].includes(round.status), "Replace a category while it is in play.");
+  assert(round.modifier !== "category-swap" || (swapCategory?.id && swapCategory?.prompt && swapCategory.id !== category.id), "Choose a different second category.");
+
+  round.category = category;
+  round.swapCategory = round.modifier === "category-swap" ? swapCategory : null;
+  round.swapDone = false;
+  round.activeIds = [...round.phaseActiveIds];
+  round.activePlayerId = round.phaseStarterId;
+  round.usedLetters = [];
+  round.pendingLetters = [];
+  round.turnSeconds = next.settings.timerSeconds * round.answersRequired;
+  round.remainingSeconds = round.turnSeconds;
+  round.turnsTaken = 0;
+  round.turnCounts = Object.fromEntries(round.turnOrder.map((id) => [id, 0]));
+  round.minTurnsBeforeOvertime = round.activeIds.length;
+  round.status = "running";
+  next.lastEvent = { type: "category-replaced", message: "Category drawn: " + category.prompt };
   return next;
 }
 
@@ -139,7 +232,7 @@ export function markLetter(game, letter) {
 
   assert(round.status === "running", "Letters are available while the clock runs.");
   assert(LETTERS.includes(normalized), "Choose a letter from the bank.");
-  assert(!round.usedLetters.includes(normalized), normalized + " has already been used.");
+  assert(normalized === round.openLetter || !round.usedLetters.includes(normalized), normalized + " has already been used.");
   assert(!round.pendingLetters.includes(normalized), normalized + " is already marked for this turn.");
   assert(round.pendingLetters.length < round.answersRequired, "This turn already has the required letters.");
 
@@ -155,17 +248,18 @@ export function passTurn(game) {
 
   assert(canPass(next), "Mark the required answer letter before passing.");
 
-  round.usedLetters.push(...round.pendingLetters);
+  round.usedLetters.push(...round.pendingLetters.filter((letter) => letter !== round.openLetter));
   round.pendingLetters = [];
+  round.turnCounts[round.activePlayerId] = (round.turnCounts[round.activePlayerId] ?? 0) + 1;
+  round.turnsTaken += 1;
   round.activePlayerId = nextActiveId(round, round.activePlayerId);
-  round.remainingSeconds = next.settings.timerSeconds;
 
-  if (round.usedLetters.length === LETTERS.length && round.activeIds.length > 1) {
-    round.status = "overtime";
-    next.lastEvent = { type: "overtime-ready", message: "Every letter is used. Draw an overtime category." };
+  if (round.activeIds.length > 1 && overtimeIsDue(round)) {
+    setOvertimeReady(next);
   } else {
+    applyTurnModifier(next);
+    round.remainingSeconds = round.turnSeconds;
     round.status = "running";
-    next.lastEvent = { type: "turn-passed", playerId: round.activePlayerId };
   }
 
   return next;
@@ -194,7 +288,7 @@ export function continueExpiredTurn(game) {
   const round = assertRound(next);
   assert(round.status === "expired", "Only an expired turn can continue.");
   round.status = "running";
-  round.remainingSeconds = next.settings.timerSeconds;
+  round.remainingSeconds = round.turnSeconds;
   next.lastEvent = { type: "timeout-overruled", playerId: round.activePlayerId };
   return next;
 }
@@ -226,7 +320,8 @@ export function eliminateActivePlayer(game, reason = "out") {
 
   round.activeIds = round.activeIds.filter((id) => id !== playerId);
   round.pendingLetters = [];
-  round.remainingSeconds = next.settings.timerSeconds;
+  round.turnCounts[playerId] = (round.turnCounts[playerId] ?? 0) + 1;
+  round.turnsTaken += 1;
 
   assert(round.activeIds.length >= 1, "A round needs at least one remaining player.");
 
@@ -236,7 +331,6 @@ export function eliminateActivePlayer(game, reason = "out") {
   }
 
   round.activePlayerId = nextActiveId(round, playerId);
-  round.status = "running";
   const player = getPlayer(next, playerId);
   next.lastEvent = {
     type: "player-out",
@@ -244,6 +338,13 @@ export function eliminateActivePlayer(game, reason = "out") {
     reason,
     message: player.name + " is out."
   };
+
+  if (overtimeIsDue(round)) setOvertimeReady(next);
+  else {
+    applyTurnModifier(next, next.lastEvent);
+    round.remainingSeconds = round.turnSeconds;
+    round.status = "running";
+  }
 
   return next;
 }
@@ -258,13 +359,23 @@ export function startOvertime(game, category) {
   round.category = category;
   round.usedLetters = [];
   round.pendingLetters = [];
-  round.answersRequired += 1;
-  round.remainingSeconds = next.settings.timerSeconds;
+  round.answersRequired = 2;
+  round.turnSeconds = next.settings.timerSeconds * 2;
+  round.remainingSeconds = round.turnSeconds;
+  round.modifier = null;
+  round.openLetter = null;
+  round.swapCategory = null;
+  round.swapDone = false;
+  round.turnsTaken = 0;
+  round.turnCounts = Object.fromEntries(round.turnOrder.map((id) => [id, 0]));
+  round.minTurnsBeforeOvertime = round.activeIds.length;
+  round.phaseActiveIds = [...round.activeIds];
+  round.phaseStarterId = round.activePlayerId;
   round.status = "running";
   round.overtime += 1;
   next.lastEvent = {
     type: "overtime-started",
-    message: "Overtime " + round.overtime + ": " + round.answersRequired + " letters per turn."
+    message: "Overtime " + round.overtime + ": two answers per turn."
   };
 
   return next;
@@ -286,6 +397,10 @@ export function revivePlayer(game, playerId) {
 
   round.activeIds.push(playerId);
   round.activeIds.sort((a, b) => round.turnOrder.indexOf(a) - round.turnOrder.indexOf(b));
+  if (!round.phaseActiveIds.includes(playerId)) {
+    round.phaseActiveIds.push(playerId);
+    round.phaseActiveIds.sort((a, b) => round.turnOrder.indexOf(a) - round.turnOrder.indexOf(b));
+  }
   next.lastEvent = { type: "player-revived", playerId };
   return next;
 }

@@ -83,6 +83,7 @@ shadow formulas is exactly how the site drifted out of sync before this pass.
 
 - The shelf (root) lists games; it must not carry gameplay chrome (no timers, no scoreboards).
 - Each game keeps its own board layout, its own JS state machine, and its own copy — those are the parts that make it a different game.
+- On Tapple's board, a rare round modifier is a short label below the category; a reusable letter has a mint key and an infinity mark. A category-swap modifier changes the prompt in the same card after a lap, while a speed-laps modifier changes only the existing timer. Its timeout decision uses equal-size actions on desktop and full-width stacked actions on phones. These are board states and layout rules, not new button variants.
 - The wordmark itself carries no per-game icon or mark — plain text plus the `/ Game name` suffix, identical markup on the shelf and every game. A prior pass gave Taboo a one-off "brand-mark" face icon; it read as an inconsistent logo against the other two surfaces and was removed. Don't reintroduce a per-game wordmark icon without updating this file first.
 
 ## What every page MUST share

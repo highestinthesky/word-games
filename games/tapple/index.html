@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./tokens.css?v=20260919-4">
-    <link rel="stylesheet" href="./styles.css?v=20260922-3">
+    <link rel="stylesheet" href="./styles.css?v=20260924-5">
   </head>
   <body>
     <a class="skip-link" href="#game-board">Skip to the game board</a>
@@ -22,7 +22,7 @@
           <div><p class="mono-label">Start over</p><h2 id="reset-title">Start a new game?</h2></div>
           <button class="icon-button" data-action="close-reset" type="button" aria-label="Keep current game">×</button>
         </div>
-        <p class="dialog-note">Clears scores and letters. Keeps names and settings.</p>
+        <p class="dialog-note">Clears scores and letters. Keeps names, settings, and the category order.</p>
         <div class="dialog-actions">
           <button class="btn btn--outline" data-action="close-reset" type="button">Keep playing</button>
           <button class="btn btn--pear" data-action="confirm-reset" type="button">Start new game</button>
@@ -36,9 +36,14 @@
           <button class="icon-button" value="cancel" aria-label="Close rules">×</button>
         </div>
         <ol class="rule-list">
-          <li>Start game draws a category and starts the clock.</li>
-          <li>Say an answer, then take its unused first letter. The next turn starts at once.</li>
-          <li>Out removes the current player. Revive brings a player back.</li>
+          <li>Say an answer, then take its unused first letter. The next turn starts at once; the first player rotates each round.</li>
+          <li>Double answers requires two words with different letters and gives twice the time.</li>
+          <li>An open letter can be used again, but every answer must be different.</li>
+          <li>Category swap changes the prompt after one lap; claimed letters stay used.</li>
+          <li>Speed laps removes two seconds per lap, up to four seconds.</li>
+          <li>When letters run low, overtime draws a new category: two answers per turn with twice the time.</li>
+          <li>Skip category restarts that phase with its original players.</li>
+          <li>Mark out removes the current player. Revive brings a player back.</li>
           <li>When time runs out, choose whether the player is out. The last player earns the category.</li>
         </ol>
         <div class="dialog-actions"><button class="btn btn--pear" value="default">Close</button></div>
@@ -65,10 +70,10 @@
         <p class="dialog-note">Keep playing resets this player's clock.</p>
         <div class="dialog-actions">
           <button class="btn btn--soft" data-action="timeout-keep" type="button">Keep playing</button>
-          <button class="btn btn--coral" data-action="timeout-out" type="button">Out</button>
+          <button class="btn btn--coral" data-action="timeout-out" type="button">Mark out</button>
         </div>
       </div>
     </dialog>
-    <script type="module" src="./app.js?v=20260922-1"></script>
+    <script type="module" src="./app.js?v=20260924-5"></script>
   </body>
 </html>

@@ -1,5 +1,25 @@
 [
   {
+    "date": "2026-09-24",
+    "scope": "Tapple modifier states and category growth",
+    "macrostructure": "Workbench (game)",
+    "theme": "Hum",
+    "enrichment": "none",
+    "brief": "108 reviewed categories and two additional rare round states using the existing category label and timer",
+    "nav": "Shared wordmark and always-reachable header actions",
+    "footer": "Ft5 Statement on Tapple welcome only"
+  },
+  {
+    "date": "2026-09-24",
+    "scope": "Tapple board states and button audit",
+    "macrostructure": "Workbench (game)",
+    "theme": "Hum",
+    "enrichment": "none",
+    "brief": "Rare round labels, a reusable letter state, balanced timeout actions, and reachable phone controls within the existing shared button system",
+    "nav": "Shared wordmark and always-reachable header actions",
+    "footer": "Ft5 Statement on Tapple welcome only"
+  },
+  {
     "date": "2026-09-22",
     "scope": "Tapple gameplay and shelf names",
     "macrostructure": "Workbench (game) / Index-First (shelf)",
