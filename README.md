@@ -46,11 +46,14 @@ The research and design brief behind Tapple is in
 
 **Word on the Street:** build a word from reusable letters before the clock
 runs out. The other team accepts or challenges it; each street consonant in
-an accepted word moves toward the active team, once per occurrence. First
+an accepted word moves toward the active team, once per occurrence. From turn
+eight, each occurrence moves it two lanes. First
 to capture eight letters wins. The board mirrors so the active team is
 always at the bottom. Tap source letters to append them, or drag them into
-the word tray; tap a tray letter to remove it. Each new game announces four
-unavailable letters. Categories never repeat within a game.
+the word tray; the street previews each selection immediately, and tapping a
+tray letter removes it. Each new game announces four unavailable consonants,
+which disappear from the board; all vowels stay available. Categories never
+repeat within a game.
 
 ## Structure
 
