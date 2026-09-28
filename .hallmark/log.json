@@ -1,5 +1,35 @@
 [
   {
+    "date": "2026-09-27",
+    "scope": "Word on the Street widescreen legibility",
+    "macrostructure": "Workbench (game)",
+    "theme": "Hum",
+    "enrichment": "none",
+    "brief": "Scaled score labels, word sources, tray tiles, and action sizes for 1920 and 2544-pixel smartboards",
+    "nav": "Shared wordmark and always-reachable header actions",
+    "footer": "Ft5 Statement on welcome only"
+  },
+  {
+    "date": "2026-09-27",
+    "scope": "Word on the Street smartboard refinement",
+    "macrostructure": "Workbench (game)",
+    "theme": "Hum",
+    "enrichment": "none",
+    "brief": "Viewport-filling street, visibly unavailable letters, short start announcement, and aligned challenge actions",
+    "nav": "Shared wordmark and always-reachable header actions",
+    "footer": "Ft5 Statement on welcome only"
+  },
+  {
+    "date": "2026-09-27",
+    "scope": "Word on the Street smartboard game",
+    "macrostructure": "Workbench (game)",
+    "theme": "Hum",
+    "enrichment": "none",
+    "brief": "Two teams compose words on one smartboard, review challenges, and pull street letters using the locked design system",
+    "nav": "Shared wordmark and always-reachable header actions",
+    "footer": "Ft5 Statement on welcome only"
+  },
+  {
     "date": "2026-09-24",
     "scope": "Tapple modifier states and category growth",
     "macrostructure": "Workbench (game)",

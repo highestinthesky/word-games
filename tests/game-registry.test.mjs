@@ -30,3 +30,12 @@ test("the published selector has usable static links before JavaScript loads", a
     assert.match(html, new RegExp(`href=["']${game.href.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["']`));
   }
 });
+
+test("Word on the Street is a ready, isolated game on the shelf", async () => {
+  const game = GAMES.find((item) => item.id === "word-on-the-street");
+  assert.equal(game?.status, "ready");
+  assert.equal(game?.href, "./games/word-on-the-street/");
+  const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
+  assert.match(html, /data-game-id="word-on-the-street"/);
+  assert.match(html, /href="\.\/games\/word-on-the-street\/"/);
+});

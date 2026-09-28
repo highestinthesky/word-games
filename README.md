@@ -19,6 +19,7 @@ so you need `python3`. There's nothing to install.
 | ------ | -------------------- | ---------- | -------------- |
 | Taboo  | `games/dont-say-it/` | 2–8 teams  | 683 cards      |
 | Tapple | `games/tapple/`      | 2–8 players | 108 categories |
+| Word on the Street | `games/word-on-the-street/` | 2 teams | 140 categories |
 
 **Taboo:** describe the word on the card without saying any of its five
 forbidden words. Rounds last 30–120 seconds.
@@ -43,6 +44,14 @@ category, or clock.
 The research and design brief behind Tapple is in
 [docs/tapple-website-brief.md](docs/tapple-website-brief.md).
 
+**Word on the Street:** build a word from reusable letters before the clock
+runs out. The other team accepts or challenges it; each street consonant in
+an accepted word moves toward the active team, once per occurrence. First
+to capture eight letters wins. The board mirrors so the active team is
+always at the bottom. Tap source letters to append them, or drag them into
+the word tray; tap a tray letter to remove it. Each new game announces four
+unavailable letters. Categories never repeat within a game.
+
 ## Structure
 
 ```text
@@ -54,6 +63,7 @@ games/
   registry.js                    # List of games the shelf shows
   dont-say-it/                   # Taboo
   tapple/                        # Tapple
+  word-on-the-street/            # Word on the Street
 tests/                           # Shelf / registry tests
 docs/                            # Design briefs
 ```
@@ -89,4 +99,4 @@ npm test
 
 Uses Node's built-in test runner with no dependencies. The tests cover the
 game registry, the Taboo card deck and game logic, and Tapple categories,
-turns, and scoring.
+turns, and scoring, and Word on the Street's category deck and turn rules.

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="description" content="Play Word on the Street on one shared screen.">
+    <title>Word on the Street · Game Shelf</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;700;800&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./tokens.css">
+    <link rel="stylesheet" href="./styles.css?v=3">
+  </head>
+  <body>
+    <a class="skip-link" href="#game-board">Skip to the game board</a>
+    <main id="app"></main>
+    <p id="live-region" class="visually-hidden" aria-live="polite"></p>
+    <dialog id="rules-dialog" aria-labelledby="rules-title">
+      <form method="dialog" class="dialog-card">
+        <div class="dialog-card__head"><h2 id="rules-title">Rules</h2><button class="icon-button" value="cancel" aria-label="Close rules">×</button></div>
+        <ol class="rule-list">
+          <li>Build one word that fits the category. Press “Valid word?” before the clock reaches zero.</li>
+          <li>Each street consonant moves one lane toward your team for every time it appears. The third step off the street captures it. First to eight wins.</li>
+          <li>Four letters are unavailable each game. The other team accepts or challenges the word. A challenge either stands or annuls the move; then turns alternate normally.</li>
+        </ol>
+        <div class="dialog-actions"><button class="btn btn--pear" value="default">Close</button></div>
+      </form>
+    </dialog>
+    <dialog id="intro-dialog" aria-labelledby="intro-title"></dialog>
+    <dialog id="setup-dialog" aria-labelledby="setup-title"></dialog>
+    <dialog id="reset-dialog" aria-labelledby="reset-title">
+      <div class="dialog-card">
+        <div class="dialog-card__head"><h2 id="reset-title">Start a new game?</h2><button class="icon-button" data-action="close-reset" type="button" aria-label="Keep current game">×</button></div>
+        <div class="dialog-actions"><button class="btn btn--outline" data-action="close-reset" type="button">Keep playing</button><button class="btn btn--coral" data-action="confirm-reset" type="button">Start new game</button></div>
+      </div>
+    </dialog>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

@@ -329,6 +329,27 @@ main {
   background: var(--color-cyan-soft);
 }
 
+.game-preview--street {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-content: center;
+  align-items: center;
+  gap: var(--space-xs);
+  background: var(--color-ink-soft);
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 31%, var(--color-rule-strong) 31%, var(--color-rule-strong) 32%, transparent 32%, transparent 65%, var(--color-rule-strong) 65%, var(--color-rule-strong) 66%, transparent 66%);
+}
+
+.street-preview__tile {
+  display: grid;
+  min-block-size: 2.75rem;
+  place-items: center;
+  border: var(--rule-hair) solid var(--color-ink);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
 .game-preview__word,
 .game-preview__prompt {
   min-inline-size: 0;
