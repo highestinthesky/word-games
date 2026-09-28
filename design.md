@@ -17,11 +17,12 @@ consult it.
 
 ## Tokens (canonical · `tokens.css` is the source of truth)
 
-`/tokens.css` is the single source of truth. `/games/dont-say-it/tokens.css` and
-`/games/tapple/tokens.css` must stay **byte-identical** to it (every isolated
+`/tokens.css` is the single source of truth. Every game's `tokens.css` copy,
+including those in `/games/dont-say-it/`, `/games/tapple/`, and
+`/games/word-on-the-street/`, must stay **byte-identical** to it (every isolated
 game folder keeps its own copy so it has no cross-folder import, but the
 content never diverges). If you need a new token, add it to `/tokens.css`
-first, then copy the whole file over both game copies — never hand-edit one
+first, then copy the whole file over every game copy — never hand-edit one
 copy only.
 
 ```css
@@ -84,6 +85,7 @@ shadow formulas is exactly how the site drifted out of sync before this pass.
 - The shelf (root) lists games; it must not carry gameplay chrome (no timers, no scoreboards).
 - Each game keeps its own board layout, its own JS state machine, and its own copy — those are the parts that make it a different game.
 - On Tapple's board, a rare round modifier is a short label below the category; a reusable letter has a mint key and an infinity mark. A category-swap modifier changes the prompt in the same card after a lap, while a speed-laps modifier changes only the existing timer. Its timeout decision uses equal-size actions on desktop and full-width stacked actions on phones. These are board states and layout rules, not new button variants.
+- On Word on the Street's board, seven horizontal bands show two lanes per team, the median, and two capture rails. The active team's rail is always at the bottom; the view mirrors between turns without rotating the letter glyphs. The board fills the available desktop smartboard space, with tile size capped to preserve proportion; scores, word tiles, and action sizes grow with a wide display so they remain readable from across a room. At phone widths it becomes a scrollable vertical street. The word workspace appears after the first category draw, so the welcome board and Statement footer fit one smartboard screen. Street and captured letters stay as reusable sources while a dragged copy enters the word tray. The nine letters absent from the street appear in a small source strip. Each new game announces four unavailable letters in a modal before play; those sources remain visibly unavailable throughout that game. A visible insertion marker shows where a drag will land; dragging a tray letter out removes it. Board movement uses a short lane transition and an immediate reduced-motion alternative. Use existing Hum colors and button modifiers, with no illustrated road backdrop or new shared tokens. This is a game-board interaction, not a new shared component style.
 - The wordmark itself carries no per-game icon or mark — plain text plus the `/ Game name` suffix, identical markup on the shelf and every game. A prior pass gave Taboo a one-off "brand-mark" face icon; it read as an inconsistent logo against the other two surfaces and was removed. Don't reintroduce a per-game wordmark icon without updating this file first.
 
 ## What every page MUST share
