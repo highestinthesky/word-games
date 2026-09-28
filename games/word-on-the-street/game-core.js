@@ -35,7 +35,12 @@ function finishAccepted(game, nextTeam) {
   return endTurn(game, nextTeam);
 }
 
-function validUnavailable(letters) {
+function validUnavailable(letters, count = 4) {
+  return Array.isArray(letters) && letters.length === count && new Set(letters).size === count
+    && letters.every((letter) => STREET_LETTERS.includes(letter));
+}
+
+function oldUnavailable(letters) {
   return Array.isArray(letters) && letters.length === 4 && new Set(letters).size === 4
     && letters.filter((letter) => STREET_LETTERS.includes(letter)).length === 3
     && letters.filter((letter) => VOWELS.includes(letter)).length === 1;
@@ -44,10 +49,9 @@ function validUnavailable(letters) {
 export function pickUnavailableLetters(random = Math.random, previous = []) {
   const consonants = [...STREET_LETTERS];
   const chosen = [];
-  for (let index = 0; index < 3; index += 1) {
+  for (let index = 0; index < 4; index += 1) {
     chosen.push(consonants.splice(Math.floor(random() * consonants.length), 1)[0]);
   }
-  chosen.push(VOWELS[Math.floor(random() * VOWELS.length)]);
   if (chosen.length === previous.length && chosen.every((letter) => previous.includes(letter))) {
     chosen[0] = consonants[0];
   }
@@ -61,7 +65,7 @@ export function createGame({ names = ["Team A", "Team B"], timerSeconds = 30, un
   ensure(cleaned[0].toLocaleLowerCase() !== cleaned[1].toLocaleLowerCase(), "Team names must differ.");
   ensure(Number.isInteger(timerSeconds) && timerSeconds >= 10 && timerSeconds <= 120, "Choose a clock from 10 to 120 seconds.");
   const unavailable = unavailableLetters ?? pickUnavailableLetters(random, previousUnavailableLetters);
-  ensure(validUnavailable(unavailable), "Choose three street consonants and one vowel to exclude.");
+  ensure(validUnavailable(unavailable), "Choose four street consonants to exclude.");
   return {
     version: 1,
     teams: cleaned,
@@ -141,17 +145,25 @@ export function expireTurn(game) {
   return endTurn(next, 1 - next.activeTeam);
 }
 
+export function displayPositions(game) {
+  if (game.phase !== "composing") return game.positions;
+  const positions = { ...game.positions };
+  const direction = game.activeTeam === 0 ? 1 : -1;
+  const strength = game.turnNumber > 7 ? 2 : 1;
+  for (const letter of game.word) {
+    const position = positions[letter];
+    if (position === undefined || Math.abs(position) === 3) continue;
+    positions[letter] = Math.max(-3, Math.min(3, position + direction * strength));
+  }
+  return positions;
+}
+
 export function submitWord(game) {
   ensure(game.phase === "composing", "Submit during a running turn.");
   ensure(game.word.length >= 2, "Build a word before submitting.");
   const next = copy(game);
   next.reviewSnapshot = { ...next.positions };
-  const direction = next.activeTeam === 0 ? 1 : -1;
-  for (const letter of next.word) {
-    const position = next.positions[letter];
-    if (position === undefined || Math.abs(position) === 3) continue;
-    next.positions[letter] = Math.max(-3, Math.min(3, position + direction));
-  }
+  next.positions = displayPositions(next);
   next.phase = "review";
   next.endsAt = null;
   return next;
@@ -193,8 +205,10 @@ export function viewRow(position, activeTeam) {
 export function restoreGame(value) {
   if (!value || value.version !== 1 || !PHASES.has(value.phase)) return null;
   const legacy = value.unavailableLetters === undefined;
-  const unavailable = legacy ? [] : value.unavailableLetters;
-  if (!legacy && !validUnavailable(unavailable)) return null;
+  const savedUnavailable = legacy ? [] : value.unavailableLetters;
+  const unavailable = oldUnavailable(savedUnavailable)
+    ? savedUnavailable.filter((letter) => STREET_LETTERS.includes(letter)) : savedUnavailable;
+  if (!validUnavailable(unavailable, 4) && !validUnavailable(unavailable, 3) && !validUnavailable(unavailable, 0)) return null;
   if (legacy && !Array.isArray(value.drawProgress?.seen)) {
     value.drawProgress = { ...value.drawProgress, seen: value.turnNumber > 0 ? [...LEGACY_CATEGORY_IDS] : [] };
   }

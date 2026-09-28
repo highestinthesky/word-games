@@ -1,7 +1,7 @@
 import { CATEGORIES, drawCategory } from "./categories.js";
 import {
   STREET_LETTERS, OTHER_LETTERS, acceptWord, acknowledgeIntro, challengeWord, createGame,
-  expireTurn, insertLetter, moveLetter, removeLetter, resolveChallenge,
+  displayPositions, expireTurn, insertLetter, moveLetter, removeLetter, resolveChallenge,
   scoreFor, startTurn, submitWord, viewRow
 } from "./game-core.js";
 import { insertionIndex } from "./word-tray.js";
@@ -52,49 +52,51 @@ function prompt() {
     : game.phase === "challenge" ? "Challenge"
     : game.phase === "composing" ? game.teams[game.activeTeam]
     : game.phase === "won" ? "Winner" : "";
+  const pullLabel = game.turnNumber > 7 && ["composing", "review", "challenge"].includes(game.phase) ? " · 2× pull" : "";
   return `
     <section class="prompt-bar" data-urgent="false" aria-label="Category and clock">
-      <div class="prompt-bar__category">${label ? `<span class="mono-label">${escapeHtml(label)}</span>` : ""}<h1>${escapeHtml(heading)}</h1></div>
+      <div class="prompt-bar__category">${label ? `<span class="mono-label">${escapeHtml(label + pullLabel)}</span>` : ""}<h1>${escapeHtml(heading)}</h1></div>
       <span class="prompt-bar__clock" aria-label="${game.phase === "composing" ? "Seconds remaining" : "Clock stopped"}">${clockText()}</span>
     </section>`;
 }
 
-function score(team, active) {
+function score(displayGame, team, active) {
   return `<div class="edge-score" style="--edge-row:${active ? 7 : 1}" data-active="${active}">
-    <strong>${escapeHtml(game.teams[team])}</strong><span>${scoreFor(game, team)} / 8</span>
+    <strong>${escapeHtml(game.teams[team])}</strong><span>${scoreFor(displayGame, team)} / 8</span>
   </div>`;
 }
 
 function street() {
   const bottom = viewTeam();
   const top = 1 - bottom;
+  const positions = displayPositions(game);
+  const displayGame = { ...game, positions };
+  const visibleLetters = STREET_LETTERS.filter((letter) => !game.unavailableLetters.includes(letter));
   const lanes = Array.from({ length: 7 }, (_, index) => {
     const row = index + 1;
     const type = row === 1 || row === 7 ? "capture" : row === 4 ? "median" : "lane";
     const team = row === 1 ? top : row === 7 ? bottom : "";
     return `<div class="street-row" style="--lane-row:${row}" data-lane="${type}" data-team="${team}" aria-hidden="true"></div>`;
   }).join("");
-  const tiles = STREET_LETTERS.map((letter, index) => {
-    const position = game.positions[letter];
-    const unavailable = game.unavailableLetters.includes(letter);
+  const tiles = visibleLetters.map((letter, index) => {
+    const position = positions[letter];
     const owner = Math.abs(position) === 3 ? (position === 3 ? 0 : 1) : "none";
     const row = viewRow(position, bottom);
-    const disabled = game.phase !== "composing" || unavailable;
-    const label = unavailable ? `${letter}, unavailable this game` : owner === "none" ? `${letter}, street lane ${row}` : `${letter}, captured by ${game.teams[owner]}`;
-    return `<button class="street-tile" type="button" style="--column:${index + 1};--row:${row}" data-letter="${letter}" data-owner="${owner}" data-unavailable="${unavailable}" ${unavailable ? "" : `data-source-letter="${letter}"`} aria-label="${escapeHtml(label)}${disabled ? "" : ", add to word"}" ${disabled ? "disabled" : ""}>${letter}</button>`;
+    const disabled = game.phase !== "composing";
+    const label = owner === "none" ? `${letter}, street lane ${row}` : `${letter}, captured by ${game.teams[owner]}`;
+    return `<button class="street-tile" type="button" style="--column:${index + 1};--row:${row}" data-letter="${letter}" data-owner="${owner}" data-source-letter="${letter}" aria-label="${escapeHtml(label)}${disabled ? "" : ", add to word"}" ${disabled ? "disabled" : ""}>${letter}</button>`;
   }).join("");
   return `
-    <div class="mobile-scores"><span>${escapeHtml(game.teams[top])}: ${scoreFor(game, top)} / 8</span><span>${escapeHtml(game.teams[bottom])}: ${scoreFor(game, bottom)} / 8</span></div>
-    <section class="street-board" id="game-board" aria-label="Street board, ${escapeHtml(game.teams[bottom])} at the bottom">
-      ${lanes}${score(top, false)}${score(bottom, true)}${tiles}
+    <div class="mobile-scores"><span>${escapeHtml(game.teams[top])}: ${scoreFor(displayGame, top)} / 8</span><span>${escapeHtml(game.teams[bottom])}: ${scoreFor(displayGame, bottom)} / 8</span></div>
+    <section class="street-board" id="game-board" style="--street-count:${visibleLetters.length}" aria-label="Street board, ${escapeHtml(game.teams[bottom])} at the bottom">
+      ${lanes}${score(displayGame, top, false)}${score(displayGame, bottom, true)}${tiles}
     </section>`;
 }
 
 function workspace() {
   const composing = game.phase === "composing";
   const other = OTHER_LETTERS.map((letter) => {
-    const unavailable = game.unavailableLetters.includes(letter);
-    return `<button class="extra-tile" type="button" data-unavailable="${unavailable}" ${unavailable ? "" : `data-source-letter="${letter}"`} aria-label="${unavailable ? `${letter}, unavailable this game` : `Add ${letter} to word`}" ${composing && !unavailable ? "" : "disabled"}>${letter}</button>`;
+    return `<button class="extra-tile" type="button" data-source-letter="${letter}" aria-label="Add ${letter} to word" ${composing ? "" : "disabled"}>${letter}</button>`;
   }).join("");
   const word = game.word.map((letter, index) => `<button class="word-tile" type="button" data-word-index="${index}" aria-label="${letter}, word position ${index + 1}${composing ? ", tap to remove" : ""}" ${composing ? "" : "disabled"}>${letter}</button>`).join("");
   return `<section class="word-workspace" aria-label="Word builder">
@@ -198,7 +200,7 @@ function dismissIntro() {
 function syncClock() {
   if (game.phase !== "composing") return;
   if (Date.now() >= game.endsAt) {
-    update(expireTurn(game), "Time is up. The turn passes.");
+    update(expireTurn(game), "Time is up. The turn passes.", true);
     return;
   }
   const clock = app.querySelector(".prompt-bar__clock");
@@ -244,7 +246,7 @@ function handleAction(action) {
     if (!category) return announce("No categories remain. Start a new game.");
     return update(startTurn({ ...game, drawProgress: progress }, category), `${game.teams[game.nextTeam]}, ${category.prompt}.`);
   }
-  if (action === "pass-turn") return update(expireTurn(game), "Turn passed.");
+  if (action === "pass-turn") return update(expireTurn(game), "Turn passed.", true);
   if (action === "submit-word") {
     syncClock();
     if (game.phase !== "composing") return;
@@ -350,7 +352,7 @@ function pointerUp(event) {
       if (target !== current.index) next = moveLetter(game, current.index, target);
     }
   } else if (current.kind === "word") next = removeLetter(game, current.index);
-  if (next) update(next);
+  if (next) update(next, "", true);
 }
 
 function pointerCancel(event) {
@@ -363,9 +365,9 @@ document.addEventListener("click", (event) => {
   if (action) return handleAction(action);
   if (game.phase !== "composing") return;
   const source = event.target.closest("[data-source-letter]");
-  if (source) return update(insertLetter(game, source.dataset.sourceLetter));
+  if (source) return update(insertLetter(game, source.dataset.sourceLetter), "", true);
   const wordTile = event.target.closest("[data-word-index]");
-  if (wordTile) return update(removeLetter(game, Number(wordTile.dataset.wordIndex)));
+  if (wordTile) return update(removeLetter(game, Number(wordTile.dataset.wordIndex)), "", true);
 });
 
 document.addEventListener("pointerdown", pointerDown);
@@ -380,22 +382,22 @@ document.addEventListener("keydown", (event) => {
     event.preventDefault();
     const from = Number(tile.dataset.wordIndex);
     const to = Math.max(0, Math.min(game.word.length - 1, from + (event.key === "ArrowLeft" ? -1 : 1)));
-    if (to !== from) { update(moveLetter(game, from, to)); app.querySelector(`[data-word-index="${to}"]`)?.focus(); }
+    if (to !== from) { update(moveLetter(game, from, to), "", true); app.querySelector(`[data-word-index="${to}"]`)?.focus(); }
     return;
   }
   if (tile && ["Delete", "Backspace"].includes(event.key)) {
     event.preventDefault();
-    return update(removeLetter(game, Number(tile.dataset.wordIndex)));
+    return update(removeLetter(game, Number(tile.dataset.wordIndex)), "", true);
   }
   if (event.target.closest("button, a")) return;
   if (/^[a-z]$/i.test(event.key)) {
     event.preventDefault();
     if (game.unavailableLetters.includes(event.key.toUpperCase())) return announce(`${event.key.toUpperCase()} is unavailable this game.`);
-    return update(insertLetter(game, event.key));
+    return update(insertLetter(game, event.key), "", true);
   }
   if (event.key === "Backspace" && game.word.length) {
     event.preventDefault();
-    return update(removeLetter(game, game.word.length - 1));
+    return update(removeLetter(game, game.word.length - 1), "", true);
   }
   if (event.key === "Enter" && game.word.length >= 2) {
     event.preventDefault();

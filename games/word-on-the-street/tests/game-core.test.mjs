@@ -5,7 +5,7 @@ const core = await import("../game-core.js");
 const category = { id: "instruments", prompt: "A musical instrument" };
 
 function running() {
-  return core.startTurn(core.acknowledgeIntro(core.createGame({ names: ["North", "South"], unavailableLetters: ["N", "V", "W", "O"] })), category);
+  return core.startTurn(core.acknowledgeIntro(core.createGame({ names: ["North", "South"], unavailableLetters: ["N", "V", "W", "Y"] })), category);
 }
 
 function word(game, letters) {
@@ -39,6 +39,41 @@ test("word tray supports duplicate insertion, reorder, and removal", () => {
   const c = core.moveLetter(b, 3, 0);
   assert.equal(c.word.join(""), "TCAA");
   assert.equal(core.removeLetter(c, 2).word.join(""), "TCA");
+});
+
+test("the street previews each selected letter without committing its position", () => {
+  const start = running();
+  const one = core.insertLetter(start, "T");
+  assert.equal(core.displayPositions(one).T, 1);
+  assert.equal(one.positions.T, 0);
+  const two = core.insertLetter(one, "T");
+  assert.equal(core.displayPositions(two).T, 2);
+  const three = core.insertLetter(two, "T");
+  assert.equal(core.displayPositions(three).T, 3);
+  assert.equal(core.scoreFor({ ...three, positions: core.displayPositions(three) }, 0), 1);
+  assert.equal(core.displayPositions(core.removeLetter(two, 1)).T, 1);
+  assert.equal(core.displayPositions(core.expireTurn(two)).T, 0);
+  assert.equal(core.submitWord(two).positions.T, 2);
+});
+
+test("the preview respects captured letters and the active team's direction", () => {
+  const first = core.acceptWord(core.submitWord(word(running(), "MISSISSIPPI")));
+  const second = core.startTurn(first, category);
+  const selected = word(second, "SASS");
+  assert.equal(core.displayPositions(selected).S, 3);
+  assert.equal(core.displayPositions(selected).A, undefined);
+  assert.equal(core.displayPositions(selected).M, 1);
+  assert.equal(core.displayPositions(core.insertLetter(selected, "M")).M, 0);
+});
+
+test("pull strength doubles after seven completed team turns", () => {
+  const seventh = { ...running(), turnNumber: 7 };
+  const eighth = { ...running(), turnNumber: 8 };
+  assert.equal(core.displayPositions(core.insertLetter(seventh, "T")).T, 1);
+  assert.equal(core.displayPositions(core.insertLetter(eighth, "T")).T, 2);
+  assert.equal(core.displayPositions(word(eighth, "TT")).T, 3);
+  assert.equal(core.submitWord(word(eighth, "TA")).positions.T, 2);
+  assert.equal(core.displayPositions(core.insertLetter({ ...eighth, activeTeam: 1 }, "T")).T, -2);
 });
 
 test("timeout discards the word and forbids a late submission", () => {
@@ -78,23 +113,31 @@ test("an upheld challenge keeps the move and gives the challenger its normal tur
   assert.throws(() => core.resolveChallenge(core.challengeWord(submitted), "tie"), /verdict/i);
 });
 
-test("each new game excludes three street consonants and one vowel until acknowledged", () => {
+test("each new game excludes four consonants while every vowel stays usable", () => {
   const unavailable = core.pickUnavailableLetters(() => 0);
   assert.equal(unavailable.length, 4);
   assert.equal(new Set(unavailable).size, 4);
-  assert.equal(unavailable.filter((letter) => core.STREET_LETTERS.includes(letter)).length, 3);
-  assert.equal(unavailable.filter((letter) => "AEIOU".includes(letter)).length, 1);
+  assert.ok(unavailable.every((letter) => core.STREET_LETTERS.includes(letter)));
   const first = core.createGame({ random: () => 0 });
   const second = core.createGame({ random: () => 0, previousUnavailableLetters: first.unavailableLetters });
   assert.notDeepEqual(second.unavailableLetters, first.unavailableLetters);
-  const game = core.createGame({ unavailableLetters: ["N", "V", "W", "O"] });
+  const game = core.createGame({ unavailableLetters: ["N", "V", "W", "Y"] });
   assert.equal(game.introSeen, false);
   assert.throws(() => core.startTurn(game, category), /letters/i);
   const ready = core.acknowledgeIntro(game);
   assert.equal(ready.introSeen, true);
-  assert.throws(() => core.insertLetter(core.startTurn(ready, category), "N"), /unavailable/i);
-  assert.throws(() => core.insertLetter(core.startTurn(ready, category), "O"), /unavailable/i);
-  assert.equal(core.insertLetter(core.startTurn(ready, category), "A").word.join(""), "A");
+  const turn = core.startTurn(ready, category);
+  assert.throws(() => core.insertLetter(turn, "N"), /unavailable/i);
+  assert.equal(word(turn, "AEIOU").word.join(""), "AEIOU");
+});
+
+test("saved games with a blocked vowel regain it without losing progress", () => {
+  const saved = { ...running(), unavailableLetters: ["N", "V", "W", "O"] };
+  const restored = core.restoreGame(JSON.parse(JSON.stringify(saved)));
+  assert.deepEqual(restored.unavailableLetters, ["N", "V", "W"]);
+  assert.equal(restored.turnNumber, saved.turnNumber);
+  assert.equal(core.insertLetter(restored, "O").word.join(""), "O");
+  assert.deepEqual(core.restoreGame(JSON.parse(JSON.stringify(restored))).unavailableLetters, ["N", "V", "W"]);
 });
 
 test("eight accepted captures end the game", () => {
@@ -123,7 +166,7 @@ test("restoring malformed saved state falls back safely", () => {
 });
 
 test("older saved games keep playing without reusing their original prompts", () => {
-  const old = core.createGame({ unavailableLetters: ["N", "V", "W", "O"] });
+  const old = core.createGame({ unavailableLetters: ["N", "V", "W", "Y"] });
   delete old.unavailableLetters;
   delete old.introSeen;
   old.turnNumber = 1;
