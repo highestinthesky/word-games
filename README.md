@@ -19,7 +19,7 @@ so you need `python3`. There's nothing to install.
 | ------ | -------------------- | ---------- | -------------- |
 | Taboo  | `games/dont-say-it/` | 2–8 teams  | 683 cards      |
 | Tapple | `games/tapple/`      | 2–8 players | 108 categories |
-| Word on the Street | `games/word-on-the-street/` | 2 teams | 140 categories |
+| Word on the Street | `games/word-on-the-street/` | 2 teams | 284 categories |
 
 **Taboo:** describe the word on the card without saying any of its five
 forbidden words. Rounds last 30–120 seconds.
@@ -47,13 +47,15 @@ The research and design brief behind Tapple is in
 **Word on the Street:** build a word from reusable letters before the clock
 runs out. The other team accepts or challenges it; each street consonant in
 an accepted word moves toward the active team, once per occurrence. From turn
-eight, each occurrence moves it two lanes. First
+eight, each occurrence moves it two lanes, announced by a popup once turn seven ends. First
 to capture eight letters wins. The board mirrors so the active team is
 always at the bottom. Tap source letters to append them, or drag them into
 the word tray; the street previews each selection immediately, and tapping a
-tray letter removes it. Each new game announces four unavailable consonants,
-which disappear from the board; all vowels stay available. Categories never
-repeat within a game.
+tray letter removes it. Setup chooses how many consonants (0 to 4, default 4)
+each new game removes and announces; they disappear from the board, and a new
+game never removes a consonant the previous game removed. All vowels stay
+available. Categories never repeat within a game, and back-to-back draws never
+share a topic.
 
 ## Structure
 

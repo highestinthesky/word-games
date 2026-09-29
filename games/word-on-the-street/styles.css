@@ -325,11 +325,28 @@ h1, h2 { font-family: var(--font-display); font-style: normal; overflow-wrap: an
 }
 
 .prompt-bar__category { min-inline-size: 0; }
+/* The label slot is always rendered, so the bar keeps one height in every phase. */
+.prompt-bar__label {
+  display: flex;
+  gap: 0.6ch;
+  min-block-size: 1lh;
+  min-inline-size: 0;
+  white-space: nowrap;
+}
+.prompt-bar__team {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.prompt-bar__pull { flex: none; }
 .prompt-bar h1 {
   max-inline-size: 34ch;
+  overflow: hidden;
   font-size: clamp(var(--text-lg), 3vw, var(--text-2xl));
-  line-height: 1.08;
+  line-height: 1.2;
   letter-spacing: -0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .prompt-bar__clock {
   min-inline-size: 4.5rem;
@@ -343,9 +360,11 @@ h1, h2 { font-family: var(--font-display); font-style: normal; overflow-wrap: an
 .prompt-bar[data-urgent="true"] .prompt-bar__clock { color: var(--color-coral-deep); }
 
 .street-board {
+  --street-gutter: minmax(7.25rem, 1.15fr);
   position: relative;
   display: grid;
-  grid-template-columns: minmax(7.25rem, 1.15fr) repeat(var(--street-count), minmax(0, 1fr));
+  /* The right gutter mirrors the score gutter so the letter line is centred on the screen. */
+  grid-template-columns: var(--street-gutter) repeat(var(--street-count), minmax(0, 1fr)) var(--street-gutter);
   grid-template-rows: repeat(7, minmax(0, 1fr));
   gap: 0;
   min-inline-size: 0;
@@ -591,6 +610,21 @@ dialog::backdrop { background: var(--color-overlay); }
   justify-content: center;
   gap: var(--space-sm);
 }
+.overtime-tile {
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  inline-size: clamp(4.5rem, 16vw, 7rem);
+  block-size: clamp(4.5rem, 16vw, 7rem);
+  border: var(--rule-medium) solid var(--color-ink);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: 800;
+  line-height: 1;
+}
 .intro-letter {
   display: grid;
   place-items: center;
@@ -654,7 +688,15 @@ dialog::backdrop { background: var(--color-overlay); }
 
 @media (max-width: 38rem) {
   .prompt-bar { padding: var(--space-sm); }
-  .prompt-bar h1 { font-size: var(--text-lg); }
+  .prompt-bar h1 {
+    display: -webkit-box;
+    min-block-size: 2lh;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: var(--text-lg);
+    text-overflow: clip;
+    white-space: normal;
+  }
   .prompt-bar__clock { min-inline-size: 3.5rem; font-size: var(--text-xl); }
   .word-line { grid-template-columns: minmax(0, 1fr); gap: var(--space-2xs); }
   .action-dock { display: grid; grid-template-columns: minmax(0, 1fr); }

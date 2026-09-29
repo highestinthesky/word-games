@@ -1,6 +1,16 @@
 [
   {
     "date": "2026-09-28",
+    "scope": "Word on the Street setup, deck, and steady chrome",
+    "macrostructure": "Workbench (game)",
+    "theme": "Hum",
+    "enrichment": "none",
+    "brief": "Letters-removed setting (0 to 4) with all-new letters every game, one-time 2× pull popup, mirrored street gutters that centre the letter line, a fixed-height prompt bar, and a 284-prompt deck with topic cooldown",
+    "nav": "Shared wordmark and always-reachable header actions",
+    "footer": "Ft5 Statement on welcome only"
+  },
+  {
+    "date": "2026-09-28",
     "scope": "Word on the Street letter flow and late turns",
     "macrostructure": "Workbench (game)",
     "theme": "Hum",

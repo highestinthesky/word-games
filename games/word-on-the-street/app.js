@@ -1,8 +1,9 @@
 import { CATEGORIES, drawCategory } from "./categories.js";
 import {
-  STREET_LETTERS, OTHER_LETTERS, acceptWord, acknowledgeIntro, challengeWord, createGame,
-  displayPositions, expireTurn, insertLetter, moveLetter, removeLetter, resolveChallenge,
-  scoreFor, startTurn, submitWord, viewRow
+  MAX_REMOVED, STREET_LETTERS, OTHER_LETTERS, acceptWord, acknowledgeIntro, acknowledgeOvertime,
+  challengeWord, createGame, displayPositions, expireTurn, insertLetter, moveLetter,
+  needsOvertimeNotice, overtimeActive, removeLetter, resolveChallenge, scoreFor, startTurn,
+  submitWord, viewRow
 } from "./game-core.js";
 import { insertionIndex } from "./word-tray.js";
 import { loadGame, saveGame } from "./storage.js";
@@ -13,6 +14,7 @@ const setupDialog = document.querySelector("#setup-dialog");
 const resetDialog = document.querySelector("#reset-dialog");
 const rulesDialog = document.querySelector("#rules-dialog");
 const introDialog = document.querySelector("#intro-dialog");
+const overtimeDialog = document.querySelector("#overtime-dialog");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 function escapeHtml(value) {
@@ -52,10 +54,10 @@ function prompt() {
     : game.phase === "challenge" ? "Challenge"
     : game.phase === "composing" ? game.teams[game.activeTeam]
     : game.phase === "won" ? "Winner" : "";
-  const pullLabel = game.turnNumber > 7 && ["composing", "review", "challenge"].includes(game.phase) ? " · 2× pull" : "";
+  const pulling = overtimeActive(game) && ["composing", "review", "challenge"].includes(game.phase);
   return `
     <section class="prompt-bar" data-urgent="false" aria-label="Category and clock">
-      <div class="prompt-bar__category">${label ? `<span class="mono-label">${escapeHtml(label + pullLabel)}</span>` : ""}<h1>${escapeHtml(heading)}</h1></div>
+      <div class="prompt-bar__category"><span class="mono-label prompt-bar__label"${label ? "" : ' aria-hidden="true"'}>${label ? `<span class="prompt-bar__team">${escapeHtml(label)}</span>${pulling ? '<span class="prompt-bar__pull">· 2× pull</span>' : ""}` : ""}</span><h1>${escapeHtml(heading)}</h1></div>
       <span class="prompt-bar__clock" aria-label="${game.phase === "composing" ? "Seconds remaining" : "Clock stopped"}">${clockText()}</span>
     </section>`;
 }
@@ -179,22 +181,37 @@ function update(next, message = "", animate = false) {
   }
   if (before) animateTiles(before);
   if (message) announce(message);
-  showIntroIfNeeded();
+  showNoticeIfNeeded();
 }
 
-function showIntroIfNeeded() {
-  if (game.introSeen || introDialog.open) return;
-  introDialog.innerHTML = `<div class="dialog-card intro-card">
-    <h2 id="intro-title">Unavailable this game</h2>
-    <div class="intro-letters" aria-label="Unavailable letters">${game.unavailableLetters.map((letter) => `<span class="intro-letter">${letter}</span>`).join("")}</div>
-    <div class="dialog-actions"><button class="btn btn--pear" data-action="acknowledge-intro" type="button">Show board</button></div>
-  </div>`;
-  introDialog.showModal();
+function showNoticeIfNeeded() {
+  if (introDialog.open || overtimeDialog.open) return;
+  if (!game.introSeen) {
+    introDialog.innerHTML = `<div class="dialog-card intro-card">
+      <h2 id="intro-title">Unavailable this game</h2>
+      <div class="intro-letters" aria-label="Unavailable letters">${game.unavailableLetters.map((letter) => `<span class="intro-letter">${letter}</span>`).join("")}</div>
+      <div class="dialog-actions"><button class="btn btn--pear" data-action="acknowledge-intro" type="button">Show board</button></div>
+    </div>`;
+    introDialog.showModal();
+  } else if (needsOvertimeNotice(game)) {
+    overtimeDialog.innerHTML = `<div class="dialog-card intro-card">
+      <span class="overtime-tile" aria-hidden="true">2×</span>
+      <h2 id="overtime-title">Overtime</h2>
+      <p>Each letter used now moves two lanes.</p>
+      <div class="dialog-actions"><button class="btn btn--pear" data-action="acknowledge-overtime" type="button">Continue</button></div>
+    </div>`;
+    overtimeDialog.showModal();
+  }
 }
 
 function dismissIntro() {
   introDialog.close();
   update(acknowledgeIntro(game));
+}
+
+function dismissOvertime() {
+  overtimeDialog.close();
+  update(acknowledgeOvertime(game));
 }
 
 function syncClock() {
@@ -216,6 +233,7 @@ function renderSetup() {
       <label class="field">Team one<input name="team0" maxlength="24" required value="${escapeHtml(game.teams[0])}"></label>
       <label class="field">Team two<input name="team1" maxlength="24" required value="${escapeHtml(game.teams[1])}"></label>
       <label class="field">Word clock<select name="timer">${[30, 45, 60].map((seconds) => `<option value="${seconds}" ${game.timerSeconds === seconds ? "selected" : ""}>${seconds} seconds</option>`).join("")}</select></label>
+      <label class="field">Letters removed<select name="removed">${Array.from({ length: MAX_REMOVED + 1 }, (_, count) => `<option value="${count}" ${game.removedCount === count ? "selected" : ""}>${count}</option>`).join("")}</select></label>
     </div>
     <p class="form-error" role="alert"></p>
     <div class="dialog-actions"><button class="btn btn--outline" data-action="close-setup" type="button">Cancel</button><button class="btn btn--pear" type="submit">Start new game</button></div>
@@ -227,6 +245,7 @@ function handleAction(action) {
   if (action === "acknowledge-intro") {
     return dismissIntro();
   }
+  if (action === "acknowledge-overtime") return dismissOvertime();
   if (action === "open-rules") return rulesDialog.showModal();
   if (action === "open-setup") return renderSetup();
   if (action === "close-setup") return setupDialog.close();
@@ -234,7 +253,7 @@ function handleAction(action) {
   if (action === "close-reset") return resetDialog.close();
   if (action === "confirm-reset" || action === "play-again") {
     resetDialog.close();
-    const fresh = createGame({ names: game.teams, timerSeconds: game.timerSeconds, previousUnavailableLetters: game.unavailableLetters });
+    const fresh = createGame({ names: game.teams, timerSeconds: game.timerSeconds, removedCount: game.removedCount, previousUnavailableLetters: game.unavailableLetters });
     return update(fresh, "New game ready.");
   }
   if (action === "toggle-fullscreen") {
@@ -409,7 +428,7 @@ setupDialog.addEventListener("submit", (event) => {
   event.preventDefault();
   const data = new FormData(event.target);
   try {
-    const fresh = createGame({ names: [data.get("team0"), data.get("team1")], timerSeconds: Number(data.get("timer")), previousUnavailableLetters: game.unavailableLetters });
+    const fresh = createGame({ names: [data.get("team0"), data.get("team1")], timerSeconds: Number(data.get("timer")), removedCount: Number(data.get("removed")), previousUnavailableLetters: game.unavailableLetters });
     setupDialog.close();
     update(fresh, "New game ready.");
   } catch (error) {
@@ -422,8 +441,10 @@ for (const dialog of [rulesDialog, setupDialog, resetDialog]) {
 }
 introDialog.addEventListener("cancel", (event) => { event.preventDefault(); dismissIntro(); });
 introDialog.addEventListener("click", (event) => { if (event.target === introDialog) dismissIntro(); });
+overtimeDialog.addEventListener("cancel", (event) => { event.preventDefault(); dismissOvertime(); });
+overtimeDialog.addEventListener("click", (event) => { if (event.target === overtimeDialog) dismissOvertime(); });
 document.addEventListener("fullscreenchange", render);
 setInterval(syncClock, 100);
 save();
 render();
-showIntroIfNeeded();
+showNoticeIfNeeded();

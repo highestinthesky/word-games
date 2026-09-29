@@ -176,3 +176,83 @@ test("older saved games keep playing without reusing their original prompts", ()
   assert.deepEqual(restored.unavailableLetters, []);
   assert.ok(restored.drawProgress.seen.includes("a-fruit"));
 });
+
+test("setup chooses how many consonants each new game removes, from 0 to 4", () => {
+  for (const count of [0, 1, 2, 3, 4]) {
+    const game = core.createGame({ removedCount: count, random: () => 0.3 });
+    assert.equal(game.removedCount, count);
+    assert.equal(game.unavailableLetters.length, count);
+    assert.ok(game.unavailableLetters.every((letter) => core.STREET_LETTERS.includes(letter)));
+    assert.equal(game.introSeen, count === 0);
+  }
+  assert.equal(core.createGame().removedCount, 4);
+  for (const bad of [5, -1, 2.5, "3"]) {
+    assert.throws(() => core.createGame({ removedCount: bad }), /0 to 4/, String(bad));
+  }
+});
+
+test("a game with nothing removed starts its first turn without an announcement", () => {
+  const game = core.createGame({ removedCount: 0 });
+  assert.equal(core.startTurn(game, category).phase, "composing");
+  assert.equal(core.insertLetter(core.startTurn(game, category), "T").word.join(""), "T");
+});
+
+test("a new game never removes a consonant the previous game removed", () => {
+  let state = 7;
+  const random = () => { state = (state * 48271) % 2147483647; return state / 2147483647; };
+  let previous = [];
+  for (let round = 0; round < 300; round += 1) {
+    const removedCount = round % 5;
+    const next = core.createGame({ removedCount, previousUnavailableLetters: previous, random });
+    assert.ok(next.unavailableLetters.every((letter) => !previous.includes(letter)), `round ${round}`);
+    assert.equal(next.unavailableLetters.length, removedCount);
+    previous = next.unavailableLetters;
+  }
+  const first = core.pickUnavailableLetters(() => 0);
+  const second = core.pickUnavailableLetters(() => 0, first);
+  assert.ok(second.every((letter) => !first.includes(letter)));
+});
+
+test("the 2× pull notice is due once, when turn seven resolves", () => {
+  let game = core.acknowledgeIntro(core.createGame({ unavailableLetters: ["N", "V", "W", "Y"] }));
+  assert.equal(game.overtimeSeen, false);
+  for (let turn = 1; turn <= 7; turn += 1) {
+    assert.equal(core.needsOvertimeNotice(game), false, `before turn ${turn}`);
+    game = core.expireTurn(core.startTurn(game, category));
+  }
+  assert.equal(game.turnNumber, 7);
+  assert.equal(core.overtimeActive(game), false);
+  assert.equal(core.needsOvertimeNotice(game), true);
+  assert.equal(core.needsOvertimeNotice({ ...game, phase: "won" }), false);
+  const seen = core.acknowledgeOvertime(game);
+  assert.equal(seen.overtimeSeen, true);
+  assert.equal(core.needsOvertimeNotice(seen), false);
+  const eighth = core.startTurn(seen, category);
+  assert.equal(core.overtimeActive(eighth), true);
+  assert.equal(core.needsOvertimeNotice(eighth), false);
+  assert.equal(core.needsOvertimeNotice(core.expireTurn(eighth)), false);
+  assert.equal(core.createGame().overtimeSeen, false);
+});
+
+test("saved games keep the removal setting and never repeat the overtime notice", () => {
+  const none = core.createGame({ removedCount: 0 });
+  assert.deepEqual(core.restoreGame(JSON.parse(JSON.stringify(none))), none);
+  const two = core.createGame({ removedCount: 2, random: () => 0.5 });
+  assert.equal(core.restoreGame(JSON.parse(JSON.stringify(two))).removedCount, 2);
+
+  const old = JSON.parse(JSON.stringify({ ...running(), turnNumber: 8 }));
+  delete old.removedCount;
+  delete old.overtimeSeen;
+  const restored = core.restoreGame(old);
+  assert.equal(restored.removedCount, 4);
+  assert.equal(restored.overtimeSeen, true);
+
+  const waiting = JSON.parse(JSON.stringify({ ...core.expireTurn(running()), turnNumber: 7 }));
+  delete waiting.overtimeSeen;
+  assert.equal(core.needsOvertimeNotice(core.restoreGame(waiting)), true);
+
+  const five = JSON.parse(JSON.stringify(running()));
+  five.unavailableLetters = ["B", "C", "D", "F", "G"];
+  assert.equal(core.restoreGame(five), null);
+  assert.equal(core.restoreGame({ ...JSON.parse(JSON.stringify(running())), removedCount: 9 })?.removedCount, 4);
+});
