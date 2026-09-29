@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;700;800&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./tokens.css">
-    <link rel="stylesheet" href="./styles.css?v=5">
+    <link rel="stylesheet" href="./styles.css?v=6">
   </head>
   <body>
     <a class="skip-link" href="#game-board">Skip to the game board</a>
@@ -21,12 +21,13 @@
         <ol class="rule-list">
           <li>Build one word that fits the category. Press “Valid word?” before the clock reaches zero.</li>
           <li>Each street consonant moves one lane toward your team for every time it appears. From turn eight, each use moves it two lanes. The third step off the street captures it. First to eight wins.</li>
-          <li>Four street consonants are unavailable each game; all vowels stay available. The other team accepts or challenges the word. A challenge either stands or annuls the move; then turns alternate normally.</li>
+          <li>Setup sets how many street consonants (0 to 4) are unavailable each game; all vowels stay available. The other team accepts or challenges the word. A challenge either stands or annuls the move; then turns alternate normally.</li>
         </ol>
         <div class="dialog-actions"><button class="btn btn--pear" value="default">Close</button></div>
       </form>
     </dialog>
     <dialog id="intro-dialog" aria-labelledby="intro-title"></dialog>
+    <dialog id="overtime-dialog" aria-labelledby="overtime-title"></dialog>
     <dialog id="setup-dialog" aria-labelledby="setup-title"></dialog>
     <dialog id="reset-dialog" aria-labelledby="reset-title">
       <div class="dialog-card">

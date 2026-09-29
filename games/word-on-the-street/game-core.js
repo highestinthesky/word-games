@@ -4,6 +4,8 @@ export const STREET_LETTERS = Object.freeze("BCDFGHKLMNPRSTVWY".split(""));
 export const OTHER_LETTERS = Object.freeze("AEIOUJQXZ".split(""));
 const ALPHABET = new Set("ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""));
 const VOWELS = Object.freeze("AEIOU".split(""));
+export const MAX_REMOVED = 4;
+export const OVERTIME_AFTER_TURN = 7;
 const PHASES = new Set(["ready", "composing", "review", "challenge", "won"]);
 
 function ensure(condition, message) {
@@ -35,9 +37,13 @@ function finishAccepted(game, nextTeam) {
   return endTurn(game, nextTeam);
 }
 
-function validUnavailable(letters, count = 4) {
-  return Array.isArray(letters) && letters.length === count && new Set(letters).size === count
+function validUnavailable(letters) {
+  return Array.isArray(letters) && letters.length <= MAX_REMOVED && new Set(letters).size === letters.length
     && letters.every((letter) => STREET_LETTERS.includes(letter));
+}
+
+function validRemovedCount(count) {
+  return Number.isInteger(count) && count >= 0 && count <= MAX_REMOVED;
 }
 
 function oldUnavailable(letters) {
@@ -46,34 +52,35 @@ function oldUnavailable(letters) {
     && letters.filter((letter) => VOWELS.includes(letter)).length === 1;
 }
 
-export function pickUnavailableLetters(random = Math.random, previous = []) {
-  const consonants = [...STREET_LETTERS];
+export function pickUnavailableLetters(random = Math.random, previous = [], count = MAX_REMOVED) {
+  const fresh = STREET_LETTERS.filter((letter) => !previous.includes(letter));
+  const consonants = fresh.length >= count ? fresh : [...STREET_LETTERS];
   const chosen = [];
-  for (let index = 0; index < 4; index += 1) {
+  for (let index = 0; index < count; index += 1) {
     chosen.push(consonants.splice(Math.floor(random() * consonants.length), 1)[0]);
-  }
-  if (chosen.length === previous.length && chosen.every((letter) => previous.includes(letter))) {
-    chosen[0] = consonants[0];
   }
   return chosen.sort();
 }
 
-export function createGame({ names = ["Team A", "Team B"], timerSeconds = 30, unavailableLetters, previousUnavailableLetters = [], random = Math.random } = {}) {
+export function createGame({ names = ["Team A", "Team B"], timerSeconds = 30, removedCount = MAX_REMOVED, unavailableLetters, previousUnavailableLetters = [], random = Math.random } = {}) {
   ensure(Array.isArray(names) && names.length === 2, "Name two teams.");
   const cleaned = names.map((name) => String(name).trim());
   ensure(cleaned.every(Boolean), "Name both teams.");
   ensure(cleaned[0].toLocaleLowerCase() !== cleaned[1].toLocaleLowerCase(), "Team names must differ.");
   ensure(Number.isInteger(timerSeconds) && timerSeconds >= 10 && timerSeconds <= 120, "Choose a clock from 10 to 120 seconds.");
-  const unavailable = unavailableLetters ?? pickUnavailableLetters(random, previousUnavailableLetters);
-  ensure(validUnavailable(unavailable), "Choose four street consonants to exclude.");
+  ensure(validRemovedCount(removedCount), "Remove 0 to 4 letters.");
+  const unavailable = unavailableLetters ?? pickUnavailableLetters(random, previousUnavailableLetters, removedCount);
+  ensure(validUnavailable(unavailable), "Choose up to four street consonants to exclude.");
   return {
     version: 1,
     teams: cleaned,
     timerSeconds,
     remainingSeconds: timerSeconds,
     positions: Object.fromEntries(STREET_LETTERS.map((letter) => [letter, 0])),
+    removedCount: unavailableLetters ? unavailable.length : removedCount,
     unavailableLetters: [...unavailable].sort(),
-    introSeen: false,
+    introSeen: unavailable.length === 0,
+    overtimeSeen: false,
     phase: "ready",
     activeTeam: 0,
     nextTeam: 0,
@@ -91,6 +98,20 @@ export function acknowledgeIntro(game) {
   ensure(game.phase === "ready" && game.turnNumber === 0, "Announce letters before the first turn.");
   const next = copy(game);
   next.introSeen = true;
+  return next;
+}
+
+export function overtimeActive(game) {
+  return game.turnNumber > OVERTIME_AFTER_TURN;
+}
+
+export function needsOvertimeNotice(game) {
+  return game.phase === "ready" && game.turnNumber === OVERTIME_AFTER_TURN && !game.overtimeSeen;
+}
+
+export function acknowledgeOvertime(game) {
+  const next = copy(game);
+  next.overtimeSeen = true;
   return next;
 }
 
@@ -149,7 +170,7 @@ export function displayPositions(game) {
   if (game.phase !== "composing") return game.positions;
   const positions = { ...game.positions };
   const direction = game.activeTeam === 0 ? 1 : -1;
-  const strength = game.turnNumber > 7 ? 2 : 1;
+  const strength = overtimeActive(game) ? 2 : 1;
   for (const letter of game.word) {
     const position = positions[letter];
     if (position === undefined || Math.abs(position) === 3) continue;
@@ -208,11 +229,13 @@ export function restoreGame(value) {
   const savedUnavailable = legacy ? [] : value.unavailableLetters;
   const unavailable = oldUnavailable(savedUnavailable)
     ? savedUnavailable.filter((letter) => STREET_LETTERS.includes(letter)) : savedUnavailable;
-  if (!validUnavailable(unavailable, 4) && !validUnavailable(unavailable, 3) && !validUnavailable(unavailable, 0)) return null;
+  if (!validUnavailable(unavailable)) return null;
   if (legacy && !Array.isArray(value.drawProgress?.seen)) {
     value.drawProgress = { ...value.drawProgress, seen: value.turnNumber > 0 ? [...LEGACY_CATEGORY_IDS] : [] };
   }
   value.unavailableLetters = unavailable;
+  value.removedCount = validRemovedCount(value.removedCount) ? value.removedCount : MAX_REMOVED;
+  value.overtimeSeen = typeof value.overtimeSeen === "boolean" ? value.overtimeSeen : value.turnNumber > OVERTIME_AFTER_TURN;
   value.introSeen = legacy ? true : value.introSeen;
   if (typeof value.introSeen !== "boolean") return null;
   if (!value.introSeen && (value.phase !== "ready" || value.turnNumber !== 0)) return null;
@@ -227,7 +250,8 @@ export function restoreGame(value) {
   if (["review", "challenge"].includes(value.phase) && (!value.reviewSnapshot || STREET_LETTERS.some((letter) => !Number.isInteger(value.reviewSnapshot[letter]) || Math.abs(value.reviewSnapshot[letter]) > 3))) return null;
   if (value.phase === "won" && (![0, 1].includes(value.winner) || scoreFor(value, value.winner) < 8)) return null;
   if (!value.drawProgress || !Array.isArray(value.drawProgress.bag) || !Array.isArray(value.drawProgress.seen)) return null;
+  if (new Set(value.drawProgress.seen).size !== value.drawProgress.seen.length) return null;
   const known = new Set(CATEGORIES.map((item) => item.id));
-  if (value.drawProgress.seen.some((id) => !known.has(id)) || new Set(value.drawProgress.seen).size !== value.drawProgress.seen.length) return null;
+  value.drawProgress = { ...value.drawProgress, seen: value.drawProgress.seen.filter((id) => known.has(id)) };
   return value;
 }

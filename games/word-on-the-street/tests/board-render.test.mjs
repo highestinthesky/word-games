@@ -19,7 +19,7 @@ test("selecting and removing letters redraws the street immediately, while unava
   const elements = new Map([
     ["#app", app], ["#live-region", { textContent: "" }],
     ["#setup-dialog", dialog()], ["#reset-dialog", dialog()],
-    ["#rules-dialog", dialog()], ["#intro-dialog", dialog()]
+    ["#rules-dialog", dialog()], ["#intro-dialog", dialog()], ["#overtime-dialog", dialog()]
   ]);
   const handlers = new Map();
   const previous = {
