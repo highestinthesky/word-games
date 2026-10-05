@@ -22,7 +22,8 @@ so you need `python3`. There's nothing to install.
 | Word on the Street | `games/word-on-the-street/` | 2 teams | 284 categories |
 
 **Taboo:** describe the word on the card without saying any of its five
-forbidden words. Rounds last 30–120 seconds.
+forbidden words. Correct answers earn +1, taboo answers lose 1, and skips
+score 0 unless the optional skip penalty is on. Rounds last 30–120 seconds.
 
 | Key         | Action                |
 | ----------- | --------------------- |
@@ -45,17 +46,17 @@ The research and design brief behind Tapple is in
 [docs/tapple-website-brief.md](docs/tapple-website-brief.md).
 
 **Word on the Street:** build a word from reusable letters before the clock
-runs out. The other team accepts or challenges it; each street consonant in
-an accepted word moves toward the active team, once per occurrence. From turn
-eight, each occurrence moves it two lanes, announced by a popup once turn seven ends. First
-to capture eight letters wins. The board mirrors so the active team is
-always at the bottom. Tap source letters to append them, or drag them into
-the word tray; the street previews each selection immediately, and tapping a
-tray letter removes it. Setup chooses how many consonants (0 to 4, default 4)
-each new game removes and announces; they disappear from the board, and a new
-game never removes a consonant the previous game removed. All vowels stay
-available. Categories never repeat within a game, and back-to-back draws never
-share a topic.
+runs out. The clock is adjustable from 10–120 seconds. The other team accepts
+or challenges the word; each street consonant in an accepted word moves toward
+the active team, once per occurrence. From turn eight, each occurrence moves
+it two lanes, announced by a popup once turn seven ends. First to capture
+eight letters wins. The board mirrors so the active team is always at the
+bottom. Tap source letters to append them, or drag them into the word tray;
+the street previews each selection immediately, and tapping a tray letter
+removes it. Setup can remove 0 to 4 consonants (default 4); they are announced
+and disappear from the board. A new game never removes a consonant used by the
+previous game. All vowels stay available. Categories never repeat within a
+game, and back-to-back draws never share a topic.
 
 ## Structure
 
@@ -103,5 +104,6 @@ npm test
 ```
 
 Uses Node's built-in test runner with no dependencies. The tests cover the
-game registry, the Taboo card deck and game logic, and Tapple categories,
-turns, and scoring, and Word on the Street's category deck and turn rules.
+game registry, Taboo cards and game logic, Tapple categories and game logic,
+and Word on the Street's categories, turns, board, storage, and interaction
+flows.
