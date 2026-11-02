@@ -1,5 +1,15 @@
 [
   {
+    "date": "2026-11-02",
+    "scope": "Taboo Poetry for Neanderthals submode",
+    "macrostructure": "Workbench (game)",
+    "theme": "Hum",
+    "enrichment": "none",
+    "brief": "Optional one-syllable clue mode with 180 original high-school-level targets, no forbidden-word block, persisted deck histories, and existing shared controls",
+    "nav": "Shared wordmark and always-reachable header actions",
+    "footer": "Ft5 Statement"
+  },
+  {
     "date": "2026-09-28",
     "scope": "Word on the Street setup, deck, and steady chrome",
     "macrostructure": "Workbench (game)",
