@@ -34,7 +34,7 @@ Files: update `games/dont-say-it/README.md`, `.hallmark/log.json`, and this prog
 
 - [x] Document mode behavior and content scope; append Hallmark record.
 - [x] Review whole diff and resolve material findings; run final checks.
-- [ ] Commit, push `neanderthals`, and create PR to `main`.
+- [x] Commit, push `neanderthals`, and create PR to `main`: https://github.com/highestinthesky/word-games/pull/4
 
 ## Verification record
 
@@ -44,3 +44,5 @@ Files: update `games/dont-say-it/README.md`, `.hallmark/log.json`, and this prog
 - Hallmark: preserved Workbench/Hum, canonical tokens and shared controls; added no artwork, fonts, or dependencies. Tightened mode-setting spacing and scaled long targets on phones.
 - Impeccable Lite: harden (legacy saves, mode lock, independent exhaustion and history, long labels) and clarify (short toggle label, clear rule/penalty and mode-change timing). Separate adapt, onboard, and optimize flows skipped: responsive checks are covered by Hallmark; no new onboarding or performance bottleneck.
 - Branch: `neanderthals`; PR to `main` explicitly requested. Reused the clean current checkout rather than making another worktree.
+
+GitHub confirms PR #4 is mergeable. The concurrent update to main changes only the root README.
