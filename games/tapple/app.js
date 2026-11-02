@@ -1,6 +1,7 @@
 import { CATEGORY_PACK_VERSION, CLASSROOM_SAFE_PACK, drawCategory, upgradeDrawBag } from "./categories.js?v=20261102-1";
 import {
   LETTERS,
+  MAX_OVERTIMES,
   chooseRoundModifier,
   continueExpiredTurn,
   createGame,
@@ -14,7 +15,7 @@ import {
   startOvertime,
   startRound,
   tickTimer
-} from "./game-core.js?v=20260924-5";
+} from "./game-core.js?v=20261102-2";
 
 const STORAGE_KEY = "word-games:category-sprint:v1";
 const DEFAULT_NAMES = ["Player 1", "Player 2", "Player 3"];
@@ -58,6 +59,7 @@ function loadState() {
       if (saved.round?.status === "ready") saved.round.status = "running";
       const round = saved.round ? {
         ...saved.round,
+        overtime: saved.round.overtime ?? 0,
         modifier: saved.round.modifier ?? null,
         openLetter: saved.round.openLetter ?? null,
         swapCategory: saved.round.swapCategory ?? null,
@@ -69,6 +71,11 @@ function loadState() {
         phaseActiveIds: saved.round.phaseActiveIds ?? [...saved.round.activeIds],
         phaseStarterId: saved.round.phaseStarterId ?? saved.round.turnOrder[0]
       } : null;
+      // Saved rounds from before the cap may be waiting for a third draw.
+      if (round?.status === "overtime" && round.overtime >= MAX_OVERTIMES) {
+        round.status = "paused";
+        round.remainingSeconds = round.turnSeconds;
+      }
       return {
         ...saved,
         version: 2,

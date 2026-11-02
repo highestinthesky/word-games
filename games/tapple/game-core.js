@@ -1,5 +1,6 @@
 export const LETTERS = Object.freeze("ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""));
 export const OPEN_LETTERS = Object.freeze(["B", "C", "M", "P", "S", "T"]);
+export const MAX_OVERTIMES = 2;
 
 const LOW_YIELD_LETTERS = new Set(["Q", "U", "V", "X", "Z"]);
 const MODIFIER_RATE = 0.12;
@@ -48,14 +49,16 @@ function nextActiveId(round, fromId) {
 }
 
 function overtimeIsDue(round) {
+  if (round.overtime >= MAX_OVERTIMES) return false;
   const remaining = LETTERS.filter((letter) => !round.usedLetters.includes(letter));
   if (!remaining.length) return true;
   if (round.turnsTaken < round.minTurnsBeforeOvertime) return false;
 
   const activeCount = round.activeIds.length;
+  const cutoffReduction = (round.overtime ?? 0) * 2;
   const ordinaryRemaining = remaining.filter((letter) => !LOW_YIELD_LETTERS.has(letter)).length;
-  const scarceLetters = remaining.length <= Math.min(14, activeCount + 5)
-    || ordinaryRemaining <= activeCount + 1;
+  const scarceLetters = remaining.length <= Math.min(14, activeCount + 5) - cutoffReduction
+    || ordinaryRemaining <= activeCount + 1 - cutoffReduction;
   const openLetterLimit = round.openLetter
     && round.turnsTaken >= Math.max(12, round.turnOrder.length * 3);
   return scarceLetters || openLetterLimit;
@@ -354,6 +357,7 @@ export function startOvertime(game, category) {
   const round = assertRound(next);
 
   assert(round.status === "overtime", "Overtime is not ready yet.");
+  assert(round.overtime < MAX_OVERTIMES, "A round can have at most two overtimes.");
   assert(category?.id && category?.prompt, "Choose a reviewed overtime category.");
 
   round.category = category;

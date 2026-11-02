@@ -299,3 +299,71 @@ test("later overtimes keep a feasible two-answer turn", () => {
   assert.equal(game.round.answersRequired, 2);
   assert.equal(game.round.turnSeconds, 20);
 });
+
+test("the second overtime waits for two fewer remaining letters", () => {
+  for (const [remaining, status] of [["ABCDEF", "running"], ["ABCDE", "overtime"]]) {
+    let game = gameWithRound(["Maya", "Sam"]);
+    game.round.status = "overtime";
+    game = startOvertime(game, { id: "overtime-one", prompt: "First overtime" });
+    game.round.usedLetters = LETTERS.filter((letter) => !(remaining + "YZ").includes(letter));
+    game.round.turnsTaken = 2;
+
+    game = markLetter(markLetter(game, "Y"), "Z");
+    assert.equal(game.round.status, status, remaining);
+  }
+});
+
+test("the second overtime also lowers the ordinary-letter cutoff", () => {
+  for (const [remaining, status] of [["CQUVWXZ", "running"], ["QUVWXZ", "overtime"]]) {
+    let game = gameWithRound(["Maya", "Sam"]);
+    game.round.status = "overtime";
+    game = startOvertime(game, { id: "overtime-one", prompt: "First overtime" });
+    game.round.usedLetters = LETTERS.filter((letter) => !("AB" + remaining).includes(letter));
+    game.round.turnsTaken = 2;
+
+    game = markLetter(markLetter(game, "A"), "B");
+    assert.equal(game.round.status, status, remaining);
+  }
+});
+
+test("after two overtimes an empty bank runs to elimination instead of a third overtime", () => {
+  let game = gameWithRound();
+  game.round.status = "overtime";
+  game = startOvertime(game, { id: "overtime-one", prompt: "First overtime" });
+  game.round.status = "overtime";
+  game = startOvertime(game, { id: "overtime-two", prompt: "Second overtime" });
+  game.round.usedLetters = LETTERS.filter((letter) => !["Y", "Z"].includes(letter));
+  game.round.turnsTaken = 3;
+
+  game = markLetter(markLetter(game, "Y"), "Z");
+  assert.equal(getAvailableLetters(game).length, 0);
+  assert.equal(game.round.status, "running");
+  game.round.remainingSeconds = 1;
+  game = eliminateActivePlayer(tickTimer(game), "timeout");
+  assert.equal(game.round.status, "running");
+  game = eliminateActivePlayer(game);
+  assert.equal(game.phase, "round-complete");
+  assert.equal(game.players.reduce((sum, player) => sum + player.score, 0), 1);
+
+  game = startRound(game, category);
+  assert.equal(game.round.overtime, 0);
+  game.round.usedLetters = LETTERS.slice(0, -1);
+  game = markLetter(game, "Z");
+  assert.equal(game.round.status, "overtime");
+});
+
+test("skipping the second overtime preserves the limit and a stale third-overtime draw is rejected", () => {
+  let game = gameWithRound();
+  game.round.status = "overtime";
+  game = startOvertime(game, { id: "overtime-one", prompt: "First overtime" });
+  game.round.status = "overtime";
+  game = startOvertime(game, { id: "overtime-two", prompt: "Second overtime" });
+  game = replaceCategory(game, category);
+  assert.equal(game.round.overtime, 2);
+  game.round.usedLetters = LETTERS.slice(0, -2);
+  game = markLetter(markLetter(game, "Y"), "Z");
+  assert.equal(game.round.status, "running");
+
+  game.round.status = "overtime";
+  assert.throws(() => startOvertime(game, category), /two overtimes/i);
+});
