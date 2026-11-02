@@ -1,4 +1,5 @@
 import { CARDS } from "./cards.js?v=20260922-3";
+import { NEANDERTHAL_CARDS } from "./neanderthal-cards.js";
 import {
   areTeamNamesValid,
   formatSignedScore,
@@ -25,10 +26,14 @@ const elements = {
   correctButton: document.querySelector("#correctButton"),
   dialogAddTeam: document.querySelector("#dialogAddTeam"),
   durationChoices: document.querySelector("#durationChoices"),
+  forbiddenBlock: document.querySelector("#forbiddenBlock"),
   forbiddenWords: document.querySelector("#forbiddenWords"),
   fullscreenButton: document.querySelector("#fullscreenButton"),
   nextTeamButton: document.querySelector("#nextTeamButton"),
   newGameButton: document.querySelector("#newGameButton"),
+  neanderthalsInput: document.querySelector("#neanderthalsInput"),
+  modeHelp: document.querySelector("#modeHelp"),
+  modeRule: document.querySelector("#modeRule"),
   resetDialog: document.querySelector("#resetDialog"),
   resetGameButton: document.querySelector("#resetGameButton"),
   cancelResetButton: document.querySelector("#cancelResetButton"),
@@ -36,6 +41,9 @@ const elements = {
   rulesButton: document.querySelector("#rulesButton"),
   rulesDialog: document.querySelector("#rulesDialog"),
   rulesPlayButton: document.querySelector("#rulesPlayButton"),
+  rulesTitle: document.querySelector("#rulesTitle"),
+  describeRule: document.querySelector("#describeRule"),
+  scoringRule: document.querySelector("#scoringRule"),
   saveSettingsButton: document.querySelector("#saveSettingsButton"),
   settingsButton: document.querySelector("#settingsButton"),
   settingsDialog: document.querySelector("#settingsDialog"),
@@ -43,12 +51,14 @@ const elements = {
   skipButton: document.querySelector("#skipButton"),
   skipPenaltyInput: document.querySelector("#skipPenaltyInput"),
   startPanel: document.querySelector("#startPanel"),
+  startTitle: document.querySelector("#startTitle"),
   startRoundButton: document.querySelector("#startRoundButton"),
   summaryCorrect: document.querySelector("#summaryCorrect"),
   summaryDialog: document.querySelector("#summaryDialog"),
   summaryScore: document.querySelector("#summaryScore"),
   summarySkipped: document.querySelector("#summarySkipped"),
   summaryTaboo: document.querySelector("#summaryTaboo"),
+  summaryPenaltyLabel: document.querySelector("#summaryPenaltyLabel"),
   summaryTeam: document.querySelector("#summaryTeam"),
   tabooButton: document.querySelector("#tabooButton"),
   teamEditor: document.querySelector("#teamEditor"),
@@ -67,6 +77,7 @@ const state = {
   activeTeamIndex: Math.min(stored.activeTeamIndex, stored.teams.length - 1),
   duration: stored.duration,
   skipPenalty: stored.skipPenalty,
+  neanderthals: stored.neanderthals,
   roundNumber: stored.roundNumber,
   running: false,
   paused: false,
@@ -79,14 +90,19 @@ const state = {
 };
 
 let usedCardIds = new Set(stored.usedCardIds);
-let deck = shuffle(CARDS.filter((card) => !usedCardIds.has(card.id)));
+let deck = shuffle(activeCards().filter((card) => !usedCardIds.has(card.id)));
 let deckIndex = 0;
 let timerFrame = 0;
+let cardSwapTimeout = 0;
 let draftTeams = [];
 let settingsHadError = false;
 
 function freshRoundStats() {
   return { correct: 0, skipped: 0, taboo: 0 };
+}
+
+function activeCards() {
+  return state.neanderthals ? NEANDERTHAL_CARDS : CARDS;
 }
 
 function loadStoredState() {
@@ -95,6 +111,7 @@ function loadStoredState() {
     activeTeamIndex: 0,
     duration: 60,
     skipPenalty: false,
+    neanderthals: false,
     roundNumber: 0,
     usedCardIds: []
   };
@@ -116,7 +133,7 @@ function loadStoredState() {
 
     if (teams.length < 2 || !areTeamNamesValid(teams.map((team) => team.name))) return fallback;
     const durationOptions = [30, 45, 60, 90, 120];
-    const playableCardIds = new Set(CARDS.map((card) => card.id));
+    const playableCardIds = new Set([...CARDS, ...NEANDERTHAL_CARDS].map((card) => card.id));
     const usedCardIds = Array.isArray(parsed.usedCardIds)
       ? [...new Set(parsed.usedCardIds.filter((id) => typeof id === "string" && playableCardIds.has(id)))]
       : [];
@@ -126,6 +143,7 @@ function loadStoredState() {
       activeTeamIndex: Number.isInteger(parsed.activeTeamIndex) ? Math.max(0, parsed.activeTeamIndex) : 0,
       duration: durationOptions.includes(parsed.duration) ? parsed.duration : 60,
       skipPenalty: Boolean(parsed.skipPenalty),
+      neanderthals: parsed.neanderthals === true,
       roundNumber: Number.isInteger(parsed.roundNumber) ? Math.max(0, parsed.roundNumber) : 0,
       usedCardIds
     };
@@ -143,6 +161,7 @@ function saveState() {
         activeTeamIndex: state.activeTeamIndex,
         duration: state.duration,
         skipPenalty: state.skipPenalty,
+        neanderthals: state.neanderthals,
         roundNumber: state.roundNumber,
         usedCardIds: [...usedCardIds]
       })
@@ -155,9 +174,26 @@ function saveState() {
 function renderApp() {
   elements.activeTeamName.textContent = state.teams[state.activeTeamIndex].name;
   elements.timerText.textContent = String(Math.ceil(state.remainingMs / 1000));
+  renderMode();
   renderTeams();
   setActionState(state.running && !state.paused);
   updateTimerVisual();
+}
+
+function renderMode() {
+  const poetry = state.neanderthals;
+  const penalty = poetry ? "Rule break" : "Taboo";
+  elements.wordCard.dataset.mode = poetry ? "neanderthals" : "taboo";
+  elements.startTitle.textContent = poetry ? "Poetry for Neanderthals" : "Ready?";
+  elements.forbiddenBlock.hidden = poetry;
+  elements.modeRule.hidden = !poetry;
+  elements.tabooButton.textContent = `${penalty} −1`;
+  elements.summaryPenaltyLabel.textContent = poetry ? "rule breaks" : "taboo";
+  elements.rulesTitle.textContent = poetry ? "Poetry for Neanderthals" : "Rules";
+  elements.describeRule.textContent = poetry
+    ? "Use only one-syllable words. Don’t say the target or its parts."
+    : "Avoid the target and the five words.";
+  elements.scoringRule.textContent = `Got it +1 · ${penalty} −1 · Skip ${state.skipPenalty ? "−1" : "0"}.`;
 }
 
 function renderTeams() {
@@ -213,6 +249,7 @@ function getNextCard() {
 }
 
 function showCard(card, animate = true) {
+  window.clearTimeout(cardSwapTimeout);
   state.currentCard = card;
   if (animate) {
     elements.wordCard.classList.add("is-swapping");
@@ -221,7 +258,7 @@ function showCard(card, animate = true) {
   const update = () => {
     elements.cardWord.textContent = card.target;
     elements.forbiddenWords.replaceChildren(
-      ...card.forbidden.map((word) => {
+      ...(state.neanderthals ? [] : card.forbidden).map((word) => {
         const item = document.createElement("li");
         item.textContent = word;
         return item;
@@ -230,7 +267,7 @@ function showCard(card, animate = true) {
     requestAnimationFrame(() => elements.wordCard.classList.remove("is-swapping"));
   };
 
-  if (animate) window.setTimeout(update, 90);
+  if (animate) cardSwapTimeout = window.setTimeout(update, 90);
   else update();
 }
 
@@ -370,22 +407,28 @@ function resetGame() {
   state.paused = false;
   state.endAt = 0;
   state.remainingMs = state.duration * 1000;
-  state.currentCard = null;
-  state.lastTarget = "";
   state.roundStats = freshRoundStats();
   usedCardIds = new Set();
-  deck = shuffle(CARDS);
+  deck = shuffle(activeCards());
   deckIndex = 0;
   state.cardsSeen = 0;
-  elements.wordCard.dataset.state = "idle";
-  elements.startPanel.inert = false;
+  clearCard();
   elements.timerButton.disabled = true;
   elements.timerButton.setAttribute("aria-label", "Round timer is ready");
-  elements.cardWord.textContent = "Ready?";
-  elements.forbiddenWords.replaceChildren();
   renderApp();
   saveState();
   showError("New game ready. Scores and the card history were reset.");
+}
+
+function clearCard() {
+  window.clearTimeout(cardSwapTimeout);
+  state.currentCard = null;
+  state.lastTarget = "";
+  elements.wordCard.classList.remove("is-swapping");
+  elements.wordCard.dataset.state = "idle";
+  elements.startPanel.inert = false;
+  elements.cardWord.textContent = "Ready?";
+  elements.forbiddenWords.replaceChildren();
 }
 
 function adjustTeamScore(teamId, delta) {
@@ -415,6 +458,9 @@ function openSettings(addBlankTeam = false) {
     draftTeams.push({ id: makeId(), name: `Team ${draftTeams.length + 1}`, score: 0 });
   }
   elements.skipPenaltyInput.checked = state.skipPenalty;
+  elements.neanderthalsInput.checked = state.neanderthals;
+  elements.neanderthalsInput.disabled = state.running;
+  elements.modeHelp.hidden = !state.running;
   const durationInput = elements.durationChoices.querySelector(`input[value="${state.duration}"]`);
   if (durationInput) durationInput.checked = true;
   clearTeamError();
@@ -504,6 +550,12 @@ function saveSettings() {
   const selectedDuration = Number(new FormData(elements.settingsForm).get("duration"));
   state.duration = [30, 45, 60, 90, 120].includes(selectedDuration) ? selectedDuration : 60;
   state.skipPenalty = elements.skipPenaltyInput.checked;
+  if (!state.running && state.neanderthals !== elements.neanderthalsInput.checked) {
+    state.neanderthals = elements.neanderthalsInput.checked;
+    deck = shuffle(activeCards().filter((card) => !usedCardIds.has(card.id)));
+    deckIndex = 0;
+    clearCard();
+  }
   if (!state.running) state.remainingMs = state.duration * 1000;
   renderApp();
   saveState();

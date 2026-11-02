@@ -11,8 +11,8 @@
       href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;800&family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260919-4" />
-    <script type="module" src="./app.js?v=20260922-3"></script>
+    <link rel="stylesheet" href="./styles.css?v=20261102-1" />
+    <script type="module" src="./app.js?v=20261102-1"></script>
   </head>
   <body>
     <a class="skip-link" href="#game">Skip to game</a>
@@ -52,14 +52,15 @@
           <article class="word-card" id="wordCard" data-state="idle" aria-live="polite">
             <div class="card-face">
               <h1 id="cardWord">Ready?</h1>
-              <div class="forbidden-block">
+              <p class="mode-rule" id="modeRule" hidden>Use only one-syllable words.</p>
+              <div class="forbidden-block" id="forbiddenBlock">
                 <p>Don’t say</p>
                 <ul id="forbiddenWords"></ul>
               </div>
             </div>
 
             <div class="start-panel" id="startPanel">
-              <h2>Ready?</h2>
+              <h2 id="startTitle">Ready?</h2>
               <button class="btn btn--pear btn--lg" id="startRoundButton" type="button">
                 Play
               </button>
@@ -101,6 +102,15 @@
           </div>
         </fieldset>
 
+        <div class="mode-setting">
+          <label class="toggle-row">
+            <strong>Neanderthals mode</strong>
+            <input id="neanderthalsInput" type="checkbox" role="switch" aria-describedby="neanderthalsHelp modeHelp" />
+          </label>
+          <p class="field-help" id="neanderthalsHelp">Harder targets. One-syllable clues. No forbidden-word list.</p>
+          <p class="field-help" id="modeHelp" hidden>Change mode between rounds.</p>
+        </div>
+
         <label class="toggle-row">
           <strong>Skip penalty</strong>
           <input id="skipPenaltyInput" type="checkbox" role="switch" />
@@ -128,8 +138,8 @@
         <button class="icon-button" id="closeRulesButton" type="button" aria-label="Close rules">×</button>
       </div>
       <ol class="rule-list">
-        <li><strong>Describe</strong><span>Avoid the five words.</span></li>
-        <li><strong>Score</strong><span>Got it +1 · Taboo −1 · Skip 0.</span></li>
+        <li><strong>Describe</strong><span id="describeRule">Avoid the target and the five words.</span></li>
+        <li><strong>Score</strong><span id="scoringRule">Got it +1 · Taboo −1 · Skip 0.</span></li>
         <li><strong>Pass</strong><span>Next team when time ends.</span></li>
       </ol>
       <button class="btn btn--pear dialog-wide-button" id="rulesPlayButton" type="button">Play</button>
@@ -143,7 +153,7 @@
       <div class="summary-grid">
         <span><strong id="summaryCorrect">0</strong> got it</span>
         <span><strong id="summarySkipped">0</strong> skipped</span>
-        <span><strong id="summaryTaboo">0</strong> taboo</span>
+        <span><strong id="summaryTaboo">0</strong> <span id="summaryPenaltyLabel">taboo</span></span>
       </div>
       <div class="dialog-actions">
         <button class="btn btn--soft" id="closeSummaryButton" type="button">Done</button>
