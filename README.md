@@ -18,7 +18,7 @@ so you need `python3`. There's nothing to install.
 | Game   | Folder               | Players    | Content        |
 | ------ | -------------------- | ---------- | -------------- |
 | Taboo  | `games/dont-say-it/` | 2–8 teams  | 683 cards      |
-| Tapple | `games/tapple/`      | 2–8 players | 108 categories |
+| Tapple | `games/tapple/`      | 2–8 players | 216 categories |
 | Word on the Street | `games/word-on-the-street/` | 2 teams | 284 categories |
 
 **Taboo:** describe the word on the card without saying any of its five

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { CLASSROOM_SAFE_PACK, drawCategory, upgradeDrawBag } from "../categories.js";
+import { CATEGORY_PACK_VERSION, CLASSROOM_SAFE_PACK, drawCategory, upgradeDrawBag } from "../categories.js";
 
 const excludedThemes = /dating|body|alcohol|drug|smoking|gambling|weapon|violence|death|crime|war|trauma|religion|race|ethnicity|nationality|gender|disability|health|politic|money|family|discipline|insult|slur/i;
 
@@ -11,7 +11,7 @@ test("classroom-safe categories cover distinct, familiar topics with reviewed an
 
   assert.equal(new Set(ids).size, ids.length);
   assert.equal(new Set(prompts).size, prompts.length);
-  assert.ok(CLASSROOM_SAFE_PACK.categories.length >= 108);
+  assert.ok(CLASSROOM_SAFE_PACK.categories.length >= 216);
   assert.ok(new Set(families).size >= 6);
   assert.ok(prompts.includes("Breakfast foods"));
   assert.ok(prompts.includes("Kitchen tools"));
@@ -67,4 +67,16 @@ test("no two categories share most of their reviewed answers", () => {
       assert.ok(overlap.length <= 3, `${categories[first].prompt} / ${categories[second].prompt}: ${overlap.join(", ")}`);
     }
   }
+});
+
+test("version-two saved games receive all 108 added categories before their pending draws", () => {
+  const categories = CLASSROOM_SAFE_PACK.categories;
+  const pending = ["breakfast-foods", "kitchen-tools"];
+  const upgraded = upgradeDrawBag(categories, pending, 2, () => 0);
+
+  assert.equal(upgraded.length, 110);
+  assert.equal(new Set(upgraded).size, 110);
+  assert.deepEqual(upgraded.slice(-2), pending);
+  assert.ok(upgraded.slice(0, -2).every((id) => categories.find((category) => category.id === id)?.introduced === 3));
+  assert.deepEqual(upgradeDrawBag(categories, upgraded, CATEGORY_PACK_VERSION), upgraded);
 });

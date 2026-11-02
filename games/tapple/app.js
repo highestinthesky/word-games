@@ -1,4 +1,4 @@
-import { CATEGORY_PACK_VERSION, CLASSROOM_SAFE_PACK, drawCategory, upgradeDrawBag } from "./categories.js?v=20260924-5";
+import { CATEGORY_PACK_VERSION, CLASSROOM_SAFE_PACK, drawCategory, upgradeDrawBag } from "./categories.js?v=20261102-1";
 import {
   LETTERS,
   chooseRoundModifier,
